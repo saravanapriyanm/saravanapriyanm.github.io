@@ -1,0 +1,33 @@
+<title>Custom drop down box using HTML and CSS</title>
+<head>
+	<style>
+		.styled-select select 
+		{
+			background: transparent;
+			width: 268px;
+			padding: 5px;
+			font-size: 16px;
+			line-height: 1;
+			border: 0;
+			border-radius: 0;
+			height: 34px;
+			-webkit-appearance: none;
+		}
+		.styled-select 
+		{
+			width: 240px;
+			height: 34px;
+			overflow: hidden;
+			background: url('https://lh3.googleusercontent.com/-bFPchtOS_PM/UudttJGrqbI/AAAAAAAAAm4/EYiK1DH6ZKo/s800/down_arrow_select.jpg') no-repeat right #B3B3B3;
+			border: 1px solid #ccc;
+		}
+
+	</style>
+</head>
+<div class="styled-select">
+	<select id="selectBox">
+		<option value="Red">Red</option>
+		<option value="Blue">Blue</option>
+		<option value="Pink">Pink</option>
+	</select>
+</div>

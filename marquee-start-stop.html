@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Simple Marquee with Controls</title>
+	<script>
+		function stopt()
+		{
+			var img = document.getElementById('marq');
+			img.setAttribute('scrollamount', 0, 0);
+			img.onmouseover= function()
+			{
+				img.setAttribute('scrollamount', 0, 0);
+			}
+			img.onmouseout= function()
+			{
+				img.setAttribute('scrollamount', 0, 0);
+			}
+		}
+		function startt()
+		{
+			var img = document.getElementById('marq');
+			img.setAttribute('scrollamount', 2, 0);
+			img.onmouseover= function()
+			{
+				img.setAttribute('scrollamount', 0, 0);
+			}
+			img.onmouseout= function()
+			{
+				img.setAttribute('scrollamount', 2, 0);
+			}
+		}
+	</script>
+
+</head>
+<body style="text-align:center;">
+	<div style="width:200px;margin:auto;">
+		No plugins, no confusion!!
+		<div onclick="stopt();" style="cursor:pointer;width:auto;background-color:#FE7C28;">
+			Click here to Stop
+		</div>
+		<div onclick="startt();" style="cursor:pointer;width:auto;background-color:#6CC655;">
+			Click here to Start
+		</div>
+		
+		<marquee id="marq" scrollamount="2" onmouseover="this.setAttribute('scrollamount', 0, 0);" onmouseout="this.setAttribute('scrollamount', 2, 0);">
+			some text to move!Hover to stop!Click stop to stop fully!Then press start to start!
+		</marquee>
+		
+	</div>
+</body>
+</html>
