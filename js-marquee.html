@@ -1,0 +1,38 @@
+<html>
+<head>
+	<title>Javascript Marquee</title>
+	<style type="text/css">
+		#marqWrap {position:relative;border:1px solid red;width:100%;overflow:hidden;}
+		#marquee {
+			position:relative;
+			display:inline-block;
+			white-space:nowrap;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="marqWrap">
+		<div id="marquee">
+			I am marq.I am marq.I am marq.I am marq.I am marq.<a href="">I am marq.</a>I am marq.
+		</div>
+	</div>
+</body>
+<script type="text/javascript">
+	marq = document.getElementById('marquee');
+	var wrap = document.getElementById('marqWrap'), wrapWidth = wrap.offsetWidth, marqWidth = marq.offsetWidth;
+	function marquee() {
+		if(parseInt(marq.style.left) < -marqWidth)
+			marq.style.left = wrapWidth+'px';
+		marq.style.left = parseInt(marq.style.left)-1+'px';
+		wrap.onmouseout=function() {marquee()};
+		wrap.onmouseover=function() {clearTimeout(timer);};
+		var timer = setTimeout(marquee,15);
+	}
+	function init() {
+		marq.style.left = wrapWidth+'px';
+		marquee();
+	}
+	window.onload = init;
+</script>
+</html>
