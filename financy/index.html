@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang='en'>
+<head>
+	<meta charset='utf-8'>
+	<title>Welcome</title>
+	<meta name='description' content=''>
+	<meta name='' content=''>
+	<meta name=viewport content='width=device-width, initial-scale=1'>
+	<link rel="manifest" href="indexeddb/manifest.json">
+	<link rel='icon shortcut' href='images/icon.png'>
+	<link rel='stylesheet' href='css/bootstrap.min.css?v=1.0'>
+	<link rel='stylesheet' href='css/styles.css?v=1.0'>
+</head>
+<body>
+	<div class="overview">
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-8">
+					<ul class="accounts">
+						<li>Indian <span class="amount">6000</span></li>
+						<li>SBI <span class="amount">600</span></li>
+						<li>Wallet <span class="amount">200</span></li>
+						<li>Total <span class="amount">6800</span></li>
+					</ul>
+				</div>
+				<div class="col-xs-4">
+					<h1>
+						<img src="images/icon.png" alt="">
+						<span>SPENT</span>
+						30000
+					</h1>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="container">
+		<ul id="htmlConsole" class="logList"></ul>
+		<footer>
+			<input type="text" id="txtEntry" class="form-control" placeholder="Tiny Description">
+			<input type="number" id="numAmount" class="form-control" placeholder="Rs.">
+			<button type="button" onclick="saveEntry()" class="form-control btn-warning">Add</button>
+		</footer>
+	</div>
+
+	<script src="js/upup.min.js"></script>
+	<script>
+		UpUp.start({
+			'content-url': 'index.html',
+			'assets': ['css/bootstrap.min.css', 'css/styles.css', 'js/scripts.js', 'js/localforage.js', 'js/upup.min.js']
+		});
+	</script>
+	<script src='js/localforage.js'></script>
+	<script src='js/scripts.js'></script>
+</body>
+</html>

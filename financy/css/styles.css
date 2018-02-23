@@ -1,0 +1,19 @@
+* {margin:0; padding:0;}
+body {font-family:Arial,helvetica,sans-serif; background-color:#eee;}
+
+footer {position:fixed; bottom:0; left:0; width:100%; background-color:#6eb832; padding:1em;}
+footer input[type='text'].form-control {float:left; width:60%;}
+footer input[type='number'].form-control {float:left; width:20%;}
+footer button.form-control {float:left; width:20%;}
+
+.logList, .accounts {list-style:none; }
+.logList li {background-color:#fff; padding:.5em; margin:1em 0;}
+.logList li .amount, .accounts li .amount {float:right; color:#6eb832;}
+
+.overview {background-color:#6eb832; color:#fff; font-size:1.25em;}
+.accounts li {margin-top:.5em;}
+.accounts li .amount {color:#000;}
+.overview h1 {text-align:center; margin-top:.5em;}
+.overview h1 span {font-size:.5em; display:block; color:#326d03; letter-spacing:2px; margin-top:.25em;}
+
+.p-p5-0 {padding:.5em 0;}
