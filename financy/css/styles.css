@@ -10,7 +10,7 @@ footer button.form-control {float:left; width:20%;}
 .logList li {background-color:#fff; padding:.5em; margin:1em 0;}
 .logList li .amount, .accounts li .amount {float:right; color:#6eb832;}
 
-.overview {background-color:#6eb832; color:#fff; font-size:1.25em;}
+.overview {background-color:#6eb832; color:#fff; font-size:1.1em;}
 .accounts li {margin-top:.5em;}
 .accounts li .amount {color:#000;}
 .overview h1 {text-align:center; margin-top:.5em;}

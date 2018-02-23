@@ -3,7 +3,7 @@
   "description": "Financy - The fast finance management app",
   "icons": [
     {
-      "src":"images/icon.png",
+      "src":"financy/images/icon.png",
       "sizes": "76x76",
       "type": "image/png"
     }
