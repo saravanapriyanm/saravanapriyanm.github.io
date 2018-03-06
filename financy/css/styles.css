@@ -1,14 +1,20 @@
 * {margin:0; padding:0;}
 body {font-family:Arial,helvetica,sans-serif; background-color:#eee;}
 
-footer {position:fixed; bottom:0; left:0; width:100%; background-color:#6eb832; padding:1em;}
-footer input[type='text'].form-control {float:left; width:60%;}
-footer input[type='number'].form-control {float:left; width:20%;}
-footer button.form-control {float:left; width:20%;}
+footer {position:fixed; bottom:-6.25em; left:0; width:100%; background-color:#6eb832; padding:1em; transition:.5s;}
+footer.active {bottom:0;}
+
+.row.no-gutter {margin-left: 0; margin-right: 0; }
+.row.no-gutter [class*='col-']:not(:first-child), .row.no-gutter [class*='col-']:not(:last-child) {padding-right: 0; padding-left: 0; }
 
 .logList, .accounts {list-style:none; }
+.logList {margin-bottom:7.5em;}
 .logList li {background-color:#fff; padding:.5em; margin:1em 0;}
 .logList li .amount, .accounts li .amount {float:right; color:#6eb832;}
+.logList li .gray {color:#888; font-size:.8em; margin-top:.25em; padding-top:.5em; border-top:1px solid #eee;}
+.logList li .tag {float:right; color: #2196F3; background-color: #2196f333; padding: .1em .75em; border-radius: 1em;}
+input.amount {width:50%; background:none; border:0; text-align:right;}
+input.amount.active {background:#fff;}
 
 .overview {background-color:#6eb832; color:#fff; font-size:1em;}
 .accounts li {margin-top:.5em;}
@@ -16,4 +22,9 @@ footer button.form-control {float:left; width:20%;}
 .overview h1 {text-align:center; margin-top:.75em; font-size:1.75em;}
 .overview h1 span {font-size:.5em; display:block; color:#326d03; letter-spacing:2px; margin-top:.25em;}
 
+.toggle {background:none; border:0; position:absolute; width:100%; top:-2em; font-size:1.25em; left:0;}
+.toggle span {display:inline-block; transform:rotate(-90deg); transition:.5s;}
+.toggle.active span {transform:rotate(90deg);}
+
 .p-p5-0 {padding:.5em 0;}
+.pt-p5 {padding-top:.5em;}
