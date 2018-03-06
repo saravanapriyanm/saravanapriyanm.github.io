@@ -9,8 +9,9 @@
 	<link rel='icon shortcut' href='images/icon.png'>
 	<link rel='stylesheet' href='css/bootstrap.min.css'>
 	<link rel='stylesheet' href='css/styles.css'>
+	<script src='js/angular.min.js'></script>
 </head>
-<body>
+<body ng-app="listApp" ng-controller="listController" data-ng-init="init()">
 	<div class="overview">
 		<div class="container">
 			<div class="row">
@@ -26,18 +27,20 @@
 					<h1>
 						<img src="images/icon.png" alt="" style="max-height:40px;">
 						<span>SPENT</span>
-						30000
+						{{ getTotal() }}
 					</h1>
 				</div>
 			</div>
 		</div>
 	</div>
 	<div class="container">
-		<ul id="htmlConsole" class="logList"></ul>
+		<ul id="htmlConsole" class="logList">
+			<li ng-repeat="x in jsonStore">{{x.desc}}<span class="amount">{{x.amount}}</span></li>
+		</ul>
 		<footer>
 			<input type="text" id="txtEntry" class="form-control" placeholder="Tiny Description">
 			<input type="number" id="numAmount" class="form-control" placeholder="Rs.">
-			<button type="button" onclick="saveEntry()" class="form-control btn-warning">Add</button>
+			<button type="button" ng-click="saveEntry()" class="form-control btn-warning">Add</button>
 		</footer>
 	</div>
 
@@ -45,7 +48,7 @@
 	<script>
 		UpUp.start({
 			'content-url': 'index.html',
-			'assets': ['css/bootstrap.min.css', 'css/styles.css', 'js/scripts.js', 'js/localforage.js', 'js/upup.min.js']
+			'assets': ['css/bootstrap.min.css', 'css/styles.css', 'js/scripts.js', 'js/localforage.js', 'js/upup.min.js', 'js/angular.min.js']
 		});
 	</script>
 	<script src='js/localforage.js'></script>
