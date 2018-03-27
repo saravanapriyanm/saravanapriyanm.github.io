@@ -1,7 +1,7 @@
 lapp = angular.module('listApp', []);
 lapp.controller('listController', function($scope,$http,$timeout) {
 
-	$scope.key='STORE_KEY', $scope.acckey='ACCOUNT_KEY', $scope.jsonStore=[], $scope.accStore={"Indian":0,"SBI":0,"Wallet":0}, $scope.value={}, $scope.toggle=false, $scope.addDescription, $scope.addAmount, $scope.addAccount='Wallet', $scope.addCategory='Food', $scope.accEdit=false, $scope.currentDate = new Date(), $scope.jsonDownload=[];
+	$scope.key='STORE_KEY', $scope.jsonStore={}, $scope.value={}, $scope.toggle=false, $scope.addDescription, $scope.addAmount, $scope.addAccount='Wallet', $scope.addCategory='Food', $scope.accEdit=false, $scope.currentDate = new Date(), $scope.jsonDownload=[], $scope.jsonStore.accounts=[{"name":"SBI","balance":5500},{"name":"Indian","balance":10500},{"name":"Wallet","balance":2500}],$scope.categories=["Food","Bills & Utilities","Clothing","Electronics","Family","Friends","Health & Beauty","Leisure","Transportation"];
 	$scope.init = function(){
 		localforage.setDriver([
 			localforage.INDEXEDDB,
@@ -10,16 +10,14 @@ lapp.controller('listController', function($scope,$http,$timeout) {
 			]).
 		then(function() {
 			localforage.getItem($scope.key).then(function(readValue) {
+				// console.log($scope.jsonStore.accounts);
 				if(readValue){
 					$scope.jsonStore = readValue;
-					$scope.$apply();
-					// $scope.jsonDownload.push(JSON.stringify($scope.jsonStore));
-					// console.log($scope.jsonDownload);
-				}
-			});
-			localforage.getItem($scope.acckey).then(function(readValue) {
-				if(readValue){
-					$scope.accStore = readValue;
+					if($scope.jsonStore.accounts==undefined){
+						console.log('Accounts undefined');
+						$scope.jsonStore.accounts=[{"name":"SBI","balance":5500},{"name":"Indian","balance":10500},{"name":"Wallet","balance":2500}]
+					}
+					// console.log($scope.jsonStore);
 					$scope.$apply();
 					// $scope.jsonDownload.push(JSON.stringify($scope.jsonStore));
 					// console.log($scope.jsonDownload);
@@ -29,51 +27,59 @@ lapp.controller('listController', function($scope,$http,$timeout) {
 	}
 	
 	$scope.saveEntry = function(){
-		if($scope.jsonStore==null) $scope.jsonStore=[];
+		if($scope.jsonStore==null) {
+			console.log('jsonStore null');
+			$scope.jsonStore={};
+		}
+		if($scope.jsonStore.expenses==undefined){
+			console.log('expenses undefined');
+			$scope.jsonStore.expenses=[];
+		}
 		$scope.value = {'desc':$scope.addDescription, 'amount':$scope.addAmount, 'acc':$scope.addAccount, 'cat':$scope.addCategory, 'date':$scope.currentDate};
-		$scope.jsonStore.push($scope.value);
+		$scope.jsonStore.expenses.push($scope.value);
 
+		angular.forEach($scope.jsonStore.accounts,function(value,key){
+			if($scope.addAccount==value.name){
+				value.balance-=$scope.addAmount;
+			}
+		});
+		console.log($scope.jsonStore.accounts);
 		localforage.setItem($scope.key, $scope.jsonStore, function() {
 			localforage.getItem($scope.key).then(function(readValue) {
 				$scope.jsonStore = readValue;
 			});
 		});
-
-		$scope.accStore=$scope.getAccounts();
-		localforage.setItem($scope.acckey, $scope.accStore, function() {
-			localforage.getItem($scope.acckey).then(function(readValue) {
-				$scope.accStore = readValue;
-			});
-		});
 	}
 
 	$scope.saveAccounts = function(){
-		if($scope.accStore==null) $scope.accStore={};
-		localforage.setItem($scope.acckey, $scope.accStore, function() {
-			localforage.getItem($scope.acckey).then(function(readValue) {
-				$scope.accStore = readValue;
+		if($scope.jsonStore==null || $scope.jsonStore.accounts==undefined) {
+			$scope.jsonStore={};
+		};
+		localforage.setItem($scope.key, $scope.jsonStore, function() {
+			localforage.getItem($scope.key).then(function(readValue) {
+				$scope.jsonStore = readValue;
 				$scope.accEdit = false;
 			});
 		});
 	}
 
-	$scope.getTotal = function(){
-		var total = 0;
-		for(var i = 0; i < $scope.jsonStore.length; i++){
-			total += parseInt($scope.jsonStore[i].amount);
+	$scope.getAccTotal = function(){
+		if($scope.jsonStore.accounts!=undefined){
+			var total = 0;
+			for(var i = 0; i < $scope.jsonStore.accounts.length; i++){
+				total += parseInt($scope.jsonStore.accounts[i].balance);
+			}
+			return total;
 		}
-		return total;
 	}
-
-	$scope.getAccounts = function(){
-		if($scope.addAccount=="SBI"){
-			$scope.accStore.SBI -= $scope.addAmount;
-		}else if($scope.addAccount=="Indian"){
-			$scope.accStore.Indian -= $scope.addAmount;
-		}else{
-			$scope.accStore.Wallet -= $scope.addAmount;
+	$scope.getTotal = function(){
+		if($scope.jsonStore.expenses!=undefined){
+			var total = 0;
+			for(var i = 0; i < $scope.jsonStore.expenses.length; i++){
+				total += parseInt($scope.jsonStore.expenses[i].amount);
+			}
+			return total;
 		}
-		return {"Indian":$scope.accStore.Indian,"SBI":$scope.accStore.SBI,"Wallet":$scope.accStore.Wallet}
 	}
 	
 });

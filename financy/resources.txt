@@ -1,5 +1,8 @@
-- ACCOUNTS MANAGEMENT
-	- Accounts key in DB
-	- Update Account balance per month
-	- Account balance update on view
+- LIVE SYNC
+	- Date stamp on edit
+	- Compare Date stamp and download/upload accordingly
 
++ ACCOUNTS MANAGEMENT
+	+ Accounts key in DB
+	+ Update Account balance per month
+	+ Account balance update on view

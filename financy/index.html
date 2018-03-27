@@ -17,12 +17,10 @@
 			<div class="row">
 				<div class="col-xs-8">
 					<ul class="accounts">
-						<li>Indian <input type="number" class="amount" ng-class="{'active':accEdit}" ng-click="accEdit=true" ng-model="accStore.Indian"></li>
-						<li>SBI <input type="number" class="amount" ng-class="{'active':accEdit}" ng-click="accEdit=true" ng-model="accStore.SBI"></li>
-						<li>Wallet <input type="number" class="amount" ng-class="{'active':accEdit}" ng-click="accEdit=true" ng-model="accStore.Wallet"></li>
+						<li ng-repeat="x in jsonStore.accounts">{{x.name}} <input type="number" class="amount" ng-class="{'active':accEdit}" ng-click="$parent.accEdit=true" ng-model="x.balance"></li>
 						<li>
 							<div ng-show="!accEdit">
-								Total <span class="amount">{{(accStore.Indian-0)+(accStore.SBI-0)+(accStore.Wallet-0)}}</span>
+								Total <span class="amount">{{getAccTotal()}}</span>
 							</div>
 							<button class="btn btn-sm btn-warning amount" ng-click="saveAccounts()" ng-show="accEdit">Done</button>
 						</li>
@@ -32,7 +30,7 @@
 					<h1>
 						<a href="{{jsonDownload}}" download="{{currentDate|date}}{{'.txt'}}"><img src="images/icon.png" alt="" style="max-height:40px;"></a>
 						<span>SPENT</span>
-						{{ getTotal() }}
+						{{getTotal()}}
 					</h1>
 				</div>
 			</div>
@@ -41,7 +39,7 @@
 	<div class="container">
 		<!-- LISTING -->
 		<ul id="htmlConsole" class="logList">
-			<li ng-repeat="x in jsonStore | orderBy:'date':true track by $index">
+			<li ng-repeat="x in jsonStore.expenses | orderBy:'date':true track by $index">
 				{{x.desc}}<span class="amount">{{x.amount}}</span>
 				<div class="gray">{{x.acc}} <span class="tag date">{{x.date | date}}</span> <span class="tag">{{x.cat}}</span></div>
 			</li>
@@ -63,23 +61,13 @@
 				</div>
 				<div class="row no-gutter pt-p5">
 					<div class="col-xs-6">
-						<select name="sctAccount" id="sctAccount" class="form-control" ng-model="addAccount">
-							<option value="Wallet">Wallet</option>
-							<option value="Indian">Indian</option>
-							<option value="SBI">SBI</option>
+						<select name="sctAccount" id="sctAccount" class="form-control" ng-model="addAccount" required>
+							<option ng-repeat="x in jsonStore.accounts" value="{{x.name}}">{{x.name}}</option>
 						</select>
 					</div>
 					<div class="col-xs-6">
-						<select name="sctCategory" id="sctCategory" class="form-control" ng-model="addCategory">
-							<option value="Food">Food</option>
-							<option value="Bills & Utilities">Bills &amp; Utilities</option>
-							<option value="Clothing">Clothing</option>
-							<option value="Electronics">Electronics</option>
-							<option value="Family">Family</option>
-							<option value="Friends">Friends</option>
-							<option value="Health & Beauty">Health &amp; Beauty</option>
-							<option value="Leisure">Leisure</option>
-							<option value="Transportation">Transportation</option>
+						<select name="sctCategory" id="sctCategory" class="form-control" ng-model="addCategory" required>
+							<option ng-repeat="x in categories" value="{{x}}">{{x}}</option>
 						</select>
 					</div>
 				</div>
