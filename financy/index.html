@@ -12,6 +12,21 @@
 	<script src='js/angular.min.js'></script>
 </head>
 <body ng-app="listApp" ng-controller="listController" data-ng-init="init()">
+	<div class="side-menu" ng-show="menuToggle">
+		<button class="menu-close" ng-click="menuToggle=!menuToggle">X Close Menu</button>
+		<ul>
+			<li><a ng-click="download()"><i>&#8681;</i>Download Data</a></li>
+			<li><a ng-click="upload()"> <i>&#8679;</i>Upload Data</a></li>
+		</ul>
+	</div>
+	<div class="header">
+		<button class="menu-toggle" ng-click="menuToggle=!menuToggle">
+			<span class="bun">&nbsp;</span>
+			<span class="bun">&nbsp;</span>
+			<span class="bun">&nbsp;</span>
+		</button>
+		<h3>Financy</h3>
+	</div>
 	<div class="overview">
 		<div class="container">
 			<div class="row">
@@ -28,7 +43,7 @@
 				</div>
 				<div class="col-xs-4">
 					<h1>
-						<a href="{{jsonDownload}}" download="{{currentDate|date}}{{'.txt'}}"><img src="images/icon.png" alt="" style="max-height:40px;"></a>
+						<img src="images/icon.png" alt="" style="max-height:40px;">
 						<span>SPENT</span>
 						{{getTotal()}}
 					</h1>
@@ -82,7 +97,7 @@
 	<script>
 		UpUp.start({
 			'content-url': 'index.html',
-			'assets': ['css/bootstrap.min.css', 'css/styles.css', 'js/scripts.js', 'js/localforage.js', 'js/upup.min.js', 'js/angular.min.js']
+			'assets': ['css/bootstrap.min.css', 'css/styles.css', 'js/scripts.js', 'js/localforage.js', 'js/upup.min.js', 'js/angular.min.js', 'images/icon.png']
 		});
 	</script>
 	<script src='js/localforage.js'></script>
