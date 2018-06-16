@@ -1,7 +1,20 @@
-lapp = angular.module('listApp', []);
-lapp.controller('listController', function($scope,$http,$timeout) {
+lapp = angular.module('listApp', ['ngRoute']);
+lapp.config(function($routeProvider){
+	$routeProvider.when('/',{
+		controller:'listController',
+		templateUrl:'expenses.html'
+	})
+	.when('/loan',{
+		templateUrl:'loan.html'
+	});
+});
 
-	$scope.key='STORE_KEY', $scope.jsonStore={}, $scope.value={}, $scope.toggle=false, $scope.addDescription, $scope.addAmount, $scope.addAccount='Wallet', $scope.addCategory='Food', $scope.accEdit=false, $scope.currentDate = new Date(), $scope.jsonDownload=[], $scope.jsonStore.accounts=[{"name":"SBI","balance":5500},{"name":"Indian","balance":10500},{"name":"Wallet","balance":2500}],$scope.categories=["Food","Bills & Utilities","Clothing","Electronics","Family","Friends","Health & Beauty","Leisure","Transportation"], $scope.menuToggle = false;
+lapp.controller('listController', function($scope,$http,$timeout) {
+	$scope.$on('$routeChangeStart', function($event, next, current) {
+		$scope.menuToggle=!$scope.menuToggle;
+	});
+
+	$scope.key='STORE_KEY', $scope.jsonStore={}, $scope.value={}, $scope.toggle=false, $scope.addDescription, $scope.addAmount, $scope.addAccount='Wallet', $scope.addCategory='Food', $scope.accEdit=false, $scope.currentDate = new Date(), $scope.loan={}, $scope.loan.addDate = new Date(), $scope.jsonDownload=[], $scope.jsonStore.accounts=[{"name":"SBI","balance":5500},{"name":"Indian","balance":10500},{"name":"Wallet","balance":2500}],$scope.categories=["Food","Bills & Utilities","Clothing","Electronics","Family","Friends","Health & Beauty","Leisure","Transportation"], $scope.menuToggle = true;
 	$scope.init = function(){
 		localforage.setDriver([
 			localforage.INDEXEDDB,
@@ -17,7 +30,7 @@ lapp.controller('listController', function($scope,$http,$timeout) {
 						console.log('Accounts undefined');
 						$scope.jsonStore.accounts=[{"name":"SBI","balance":5500},{"name":"Indian","balance":10500},{"name":"Wallet","balance":2500}]
 					}
-					// console.log($scope.jsonStore);
+					console.log($scope.jsonStore);
 					$scope.$apply();
 					// console.log($scope.jsonDownload);
 				}
@@ -116,5 +129,86 @@ lapp.controller('listController', function($scope,$http,$timeout) {
 
 	}
 
-	
+	$scope.loanKey = 'STORE_LOAN', $scope.loan.addName, $scope.loan.addAmount, $scope.loan.addDate;
+	$scope.initLoan = function(){
+		localforage.setDriver([
+			localforage.INDEXEDDB,
+			localforage.WEBSQL,
+			localforage.LOCALSTORAGE
+			]).
+		then(function() {
+			localforage.getItem($scope.loanKey).then(function(readValue) {
+				if(readValue){
+					$scope.loanStore = readValue;
+					if($scope.loanStore==undefined){
+					}
+					$scope.$apply();
+				}else{
+					console.log('Loan undefined');
+					$scope.loanStore=[];
+					console.log($scope.loanStore);
+				}
+			});
+		});
+	}
+	$scope.getTotalLoan = function(){
+		if($scope.loanStore!=null){
+			let total=0;
+			for(i=0; i<$scope.loanStore.length; i++){
+				for(j=0; j<$scope.loanStore[i].transactions.length; j++){
+					total += $scope.loanStore[i].transactions[j].amount;
+				}
+			}
+			return total;
+		}
+	}
+	$scope.getPersonLoanTotal = function(trans){
+		let personTotal = 0;
+		for(i=0;i<trans.length;i++){
+			personTotal+=trans[i].amount;
+		}
+		return personTotal;
+	}
+	$scope.saveLoanEntry = function(){
+		var existingPersonFlag = false;
+		for(i=0; i<$scope.loanStore.length; i++){
+			if($scope.loanStore[i].name==$scope.loan.addName){
+				existingPersonFlag=$scope.loan.addName;
+			}
+		}
+
+		if(existingPersonFlag){
+			for(i=0; i<$scope.loanStore.length; i++){
+				if($scope.loanStore[i].name==existingPersonFlag){
+					$scope.loanStore[i].transactions.push({
+						"description":$scope.loan.addDesc,
+						"amount":$scope.loan.addAmount,
+						"date":$scope.loan.addDate
+					});
+				}
+			}
+		}else{
+			$scope.value = {
+				"name":$scope.loan.addName,
+				"transactions":[
+				{
+					"description":$scope.loan.addDesc,
+					"amount":$scope.loan.addAmount,
+					"date":$scope.loan.addDate
+				},
+				]
+			};
+			$scope.loanStore.push($scope.value);
+		}
+		$scope.syncLoanDB();
+	}
+	$scope.syncLoanDB = function(){
+		localforage.setItem($scope.loanKey, $scope.loanStore, function() {
+			localforage.getItem($scope.loanKey).then(function(readValue) {
+				$scope.loanStore = readValue;
+				$scope.accEdit = false;
+			});
+		});
+	}
+
 }); //Controller Ends

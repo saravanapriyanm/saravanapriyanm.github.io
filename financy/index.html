@@ -10,13 +10,36 @@
 	<link rel='stylesheet' href='css/bootstrap.min.css'>
 	<link rel='stylesheet' href='css/styles.css'>
 	<script src='js/angular.min.js'></script>
+	<script src="js/angular-route.min.js"></script>
+	<!-- <script src="js/firebase.js"></script> -->
+	<!-- <script src="js/angularfire.min.js"></script> -->
+	<!-- <script>
+	  // Initialize Firebase
+	  var config = {
+	  	apiKey: "AIzaSyCseNvzT4e90G2SZF_qc-RyZPt5pZoutec",
+	  	authDomain: "financy-66cc4.firebaseapp.com",
+	  	databaseURL: "https://financy-66cc4.firebaseio.com",
+	  	projectId: "financy-66cc4",
+	  	storageBucket: "financy-66cc4.appspot.com",
+	  	messagingSenderId: "871413334396"
+	  };
+
+	  var financyApp = firebase.initializeApp(config);
+	  console.log(financyApp);
+	  var defaultStorage = financyApp.storage();
+	  var defaultDatabase = financyApp.database();
+	  defaultStorage = firebase.storage();
+	  defaultDatabase = firebase.database();
+	</script> -->
 </head>
-<body ng-app="listApp" ng-controller="listController" data-ng-init="init()">
+<body ng-app="listApp" ng-controller="listController">
 	<div class="side-menu" ng-show="menuToggle">
 		<button class="menu-close" ng-click="menuToggle=!menuToggle">X Close Menu</button>
 		<ul>
-			<li><a ng-click="download()"><i>&#8681;</i>Download Data</a></li>
-			<li><a ng-click="upload()"> <i>&#8679;</i>Upload Data</a></li>
+			<li><a href="#/"><i>&#8364;</i>Expenses</a></li>
+			<li><a href="#/loan"><i>&#9775;</i>Loan</a></li>
+			<!-- <li><a ng-click="download()"><i>&#8681;</i>Download Data</a></li> -->
+			<!-- <li><a ng-click="upload()"> <i>&#8679;</i>Upload Data</a></li> -->
 		</ul>
 	</div>
 	<div class="header">
@@ -27,77 +50,13 @@
 		</button>
 		<h3>Financy</h3>
 	</div>
-	<div class="overview">
-		<div class="container">
-			<div class="row">
-				<div class="col-xs-8">
-					<ul class="accounts">
-						<li ng-repeat="x in jsonStore.accounts">{{x.name}} <input type="number" class="amount" ng-class="{'active':accEdit}" ng-click="$parent.accEdit=true" ng-model="x.balance"></li>
-						<li>
-							<div ng-show="!accEdit">
-								Total <span class="amount">{{getAccTotal()}}</span>
-							</div>
-							<button class="btn btn-sm btn-warning amount" ng-click="saveAccounts()" ng-show="accEdit">Done</button>
-						</li>
-					</ul>
-				</div>
-				<div class="col-xs-4">
-					<h1>
-						<img src="images/icon.png" alt="" style="max-height:40px;">
-						<span>SPENT</span>
-						{{getTotal()}}
-					</h1>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div class="container">
-		<!-- LISTING -->
-		<ul id="htmlConsole" class="logList">
-			<li ng-repeat="x in jsonStore.expenses | orderBy:'date':true track by $index">
-				{{x.desc}}<span class="amount">{{x.amount}}</span>
-				<div class="gray">{{x.acc}} <span class="tag date">{{x.date | date}}</span> <span class="tag">{{x.cat}}</span></div>
-			</li>
-		</ul>
-		<!-- LISTING -->
-		<footer ng-class="{'active':toggle}">
-			<button class="toggle" ng-class="{'active':toggle}" type="button" ng-click="toggle=!toggle"><span>&#10095;</span></button>
-			<form class="form" ng-submit="saveEntry()">
-				<div class="row no-gutter">
-					<div class="col-xs-6">
-						<input type="text" id="txtEntry" class="form-control" placeholder="Tiny Description" ng-model="addDescription" required>
-					</div>
-					<div class="col-xs-3">
-						<input type="number" id="numAmount" class="form-control" placeholder="Rs."  ng-model="addAmount" required>
-					</div>
-					<div class="col-xs-3">
-						<button class="form-control btn-warning">Add</button>
-					</div>
-				</div>
-				<div class="row no-gutter pt-p5">
-					<div class="col-xs-6">
-						<select name="sctAccount" id="sctAccount" class="form-control" ng-model="addAccount" required>
-							<option ng-repeat="x in jsonStore.accounts" value="{{x.name}}">{{x.name}}</option>
-						</select>
-					</div>
-					<div class="col-xs-6">
-						<select name="sctCategory" id="sctCategory" class="form-control" ng-model="addCategory" required>
-							<option ng-repeat="x in categories" value="{{x}}">{{x}}</option>
-						</select>
-					</div>
-				</div>
-				<div class="row no-gutter pt-p5">
-					<input type="date" id="addDate" ng-model="currentDate" class="form-control">
-				</div>
-			</form>
-		</footer>
-	</div>
+	<div ng-view></div>
 
 	<script src="js/upup.min.js"></script>
 	<script>
 		UpUp.start({
 			'content-url': 'index.html',
-			'assets': ['css/bootstrap.min.css', 'css/styles.css', 'js/scripts.js', 'js/localforage.js', 'js/upup.min.js', 'js/angular.min.js', 'images/icon.png']
+			'assets': ['css/bootstrap.min.css', 'css/styles.css', 'js/scripts.js', 'js/localforage.js', 'js/upup.min.js', 'js/angular.min.js', 'js/angular-route.min.js', 'js/firebase.js', 'js/angularfire.min.js',  'images/icon.png']
 		});
 	</script>
 	<script src='js/localforage.js'></script>

@@ -1,0 +1,49 @@
+<div class="overview" data-ng-init="initLoan()">
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-12">
+				<h1>
+					{{getTotalLoan()}}
+					<span>PENDING</span>
+				</h1>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="container">
+	<ul class="logList loan">
+		<li ng-repeat="x in loanStore track by $index">
+			{{x.name}}
+			<span class="amount">{{getPersonLoanTotal(x.transactions)}}</span>
+			<div  ng-repeat="transaction in x.transactions" class="gray"> {{transaction.date | date}} <span class="tag">{{transaction.description}}</span> <span class="amount">{{transaction.amount}}</span></div>
+		</li>
+	</ul>
+	{{addLoanName}}
+	<footer ng-class="{'active':toggle}" class="loan">
+		<button class="toggle" ng-class="{'active':toggle}" type="button" ng-click="toggle=!toggle"><span>&#10095;</span></button>
+		<form class="form" ng-submit="saveLoanEntry()">
+			<div class="row">
+				<div class="col-xs-12">
+					<datalist id="names">
+						<option ng-repeat="person in loanStore" value="{{person.name}}">
+						</datalist>
+						<input type="text" list="names" class="form-control" placeholder="Name" ng-model="loan.addName" required>
+					</div>
+				</div>
+				<div class="row no-gutter">
+					<div class="col-xs-6">
+						<input type="text" class="form-control" placeholder="Description" ng-model="loan.addDesc" required>
+					</div>
+					<div class="col-xs-3">
+						<input type="number" class="form-control" placeholder="Rs." ng-model="loan.addAmount" required>
+					</div>
+					<div class="col-xs-3">
+						<button class="form-control btn-warning">Add</button>
+					</div>
+				</div>
+				<div class="row no-gutter pt-p5">
+					<input type="date" id="addDate" ng-model="loan.addDate" class="form-control">
+				</div>
+			</form>
+		</footer>
+	</div>
