@@ -1,0 +1,14 @@
+{
+  "name": "Thamizh",
+  "description": "A phonetic Tamil language convertor",
+  "icons": [
+    {
+      "src": "images/icon.png",
+      "sizes": "76x76",
+      "type": "image/png"
+    }
+  ],
+  "background_color": "#6eb832",
+  "theme_color": "#fff",
+  "display": "standalone"
+}

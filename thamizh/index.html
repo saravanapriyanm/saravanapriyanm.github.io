@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel='icon shortcut' href='icon.png'>
+  <title>Thamizh</title>
+  <style>
+    * {margin:0; padding:0; border:0; box-sizing:border-box;}
+    html{height:100%;}
+    body {height:100%; font-family:sans-serif;}
+    form {height:80%;}
+    textarea {float:left; width:100%; height:100%; border:1px solid #ccc; padding:.5em;}
+    
+    .col-6 {float:left; width:50%; height:100%;}
+    .content {float:left; width:100%; text-align:center; color:#333; padding:.5em;}
+
+    footer {position:fixed; bottom:0; background-color:#180202; text-align:center; color:rgba(255,255,255,0.6); width:100%; padding:.25em; font-size:.8em;}
+    footer a {color:inherit;}
+  </style>
+</head>
+
+<body>
+
+  <form role="form" name="tamil_unicode_utf8" method=post>
+    <div class="col-6">
+      <textarea onselect="tamil_unicode_utf8_replace();" onkeyup="tamil_unicode_utf8_replace();" onclick="tamil_unicode_utf8_replace();"
+        name="enquery" id="enquery" class="form-control" placeholder="Type in phonetic english here..."></textarea>
+    </div>
+    <div class="col-6">
+      <textarea name="query" id="query" class="form-control" placeholder="Translated text in Tamil will appear here"></textarea>
+    </div>
+  </form>
+  <div class="content">
+    This webapp is offline compatible. Use Chrome's
+    <strong>Add to Homescreen</strong> option to use as a standalone Progressive Web App.
+  </div>
+  <footer>Based on
+    <a href="http://kandupidi.com/editor/">http://kandupidi.com/editor/</a>
+  </footer>
+  <script src="upup.min.js"></script>
+  <script>
+    UpUp.start({
+      'content-url': 'index.html',
+      'assets': ['main.min.js', 'upup.min.js', 'icon.png']
+    });
+  </script>
+  <script src="main.min.js"></script>
+</body>
+
+</html>
