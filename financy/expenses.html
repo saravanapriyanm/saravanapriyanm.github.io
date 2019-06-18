@@ -24,6 +24,7 @@
 </div>
 <div class="container">
 	<!-- LISTING -->
+	<a ng-click="download()"><i>&#8681;</i>Download Data</a>
 	<ul id="htmlConsole" class="logList">
 		<li ng-repeat="x in jsonStore.expenses | orderBy:'date':true track by $index">
 			{{x.desc}}<span class="amount">{{x.amount}}</span>

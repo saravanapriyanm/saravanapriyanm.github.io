@@ -30,9 +30,8 @@ lapp.controller('listController', function($scope,$http,$timeout) {
 						console.log('Accounts undefined');
 						$scope.jsonStore.accounts=[{"name":"SBI","balance":5500},{"name":"Indian","balance":10500},{"name":"Wallet","balance":2500}]
 					}
-					console.log($scope.jsonStore);
+					$scope.jsonDownload = JSON.stringify($scope.jsonStore);
 					$scope.$apply();
-					// console.log($scope.jsonDownload);
 				}
 			});
 		});
@@ -94,39 +93,12 @@ lapp.controller('listController', function($scope,$http,$timeout) {
 		}
 	}
 
-	$scope.upload = function(){
-		if(passwd=prompt('passwd?')){
-			$scope.jsonDownload = $scope.jsonStore;
-			$http({
-				method: "post",
-				url: "http://demo.satvatinfosol.com/test/save-serve-json.php",
-				data:{type:'upload',passwd:passwd,json:$scope.jsonDownload},
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-			}).then(function(msg){
-				alert(msg.data);
-			});
-		}
-
-	}
-
 	$scope.download = function(){
-		if(passwd=prompt('passwd?')){
-			$scope.jsonDownload = $scope.jsonStore;
-			$http({
-				method: "post",
-				url: "http://demo.satvatinfosol.com/test/save-serve-json.php",
-				data:{type:'download',passwd:passwd},
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-			}).then(function(msg){
-				if(msg.data!='Failed'){
-					$scope.jsonStore=msg.data;
-					$scope.syncDB();
-				}else{
-					alert('Failure');
-				}
-			});
-		}
-
+		var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent($scope.jsonDownload);
+		var dlAnchorElem = document.createElement('a');
+		dlAnchorElem.setAttribute("href",dataStr);
+		dlAnchorElem.setAttribute("download", "financy.json");
+		dlAnchorElem.click();
 	}
 
 	$scope.loanKey = 'STORE_LOAN', $scope.loan.addName, $scope.loan.addAmount, $scope.loan.addDate;
