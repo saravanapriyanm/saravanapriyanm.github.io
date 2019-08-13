@@ -1,0 +1,142 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>To-Do</title>
+  <link href="https://fonts.googleapis.com/css?family=Nunito&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/bs-grid.css">
+  <link rel="stylesheet" href="../css/basic.css">
+  <style>
+    body {background:#252c4a; color:#fff; font-family: 'Nunito', sans-serif; }
+    h1 {letter-spacing:1px;}
+    .container {max-width:20rem; margin-top:1rem;}
+    .col-6 {float:left; width:calc(50% - 1rem); border:2px solid #244a6b; text-align:center; margin:.5rem; padding:1rem .25rem; border-radius:1rem; }
+    input, select, .btn {background-color:rgba(255,255,255,0.9); border:0; line-height:1rem; margin:.5rem; padding:.5em .75em; border-radius:2rem; transition:.5s;}
+    input:focus, select:focus, .btn:focus {outline:none; border:0; box-shadow:0 0 5px 1px #ff9800;}
+    .inline {display:flex; flex-wrap:wrap; border:2px solid #244a6b; padding:.5rem; border-radius:1rem; margin:.5rem; }
+    .d-b {flex:1;}
+    .btn-primary {background:#607d8b; color:#fff;}
+    .btn-custom {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='274' height='89' viewBox='0 0 274 89'%3E%3Ccircle id='Ellipse_1' data-name='Ellipse 1' cx='24' cy='24' r='24' transform='translate(0 41)' fill='%23fff' opacity='0.11'/%3E%3Ccircle id='Ellipse_2' data-name='Ellipse 2' cx='24' cy='24' r='24' transform='translate(226)' fill='%23fff' opacity='0.11'/%3E%3Ccircle id='Ellipse_3' data-name='Ellipse 3' cx='11' cy='11' r='11' transform='translate(209 40)' fill='%23fff' opacity='0.11'/%3E%3C/svg%3E%0A");
+      background-repeat:no-repeat; background-position:center; background-color:#2a8ded; color:#fff; font-size:1.2rem; padding:1em; width:calc(100% - 1rem); box-sizing:border-box;
+    }
+    h4 {margin-bottom:1rem; text-transform:uppercase; letter-spacing:1px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center">Team Shuffle</h1>
+    <div id="container"></div>
+  </div>  
+  <script src="react.js"></script>
+  <script src="react-dom.js"></script>
+  <script>
+
+    const Player = ({ player }) => {
+      return React.createElement("p", { className: "list-group-item" }, player.name);
+    };
+    
+    const PlayerList = ({ players }) => {
+      var htmlNode = 'Add players';
+      if(players.length){
+        htmlNode = players.map(player => {
+          return React.createElement(Player, {player:player, key:player.key});
+        });
+      }
+      return React.createElement("div", { className: "list-group" }, htmlNode);
+      // return React.createElement("div", { className: "list-group", style: { marginTop: '30px' } }, htmlNode);
+    };
+
+    const ShufflePlayersForm = ({ players,shuffleplayers }) => {
+      return (
+        React.createElement("button", 
+        { 
+          className: "btn btn-custom",
+          onClick: ()=>{shuffleplayers(players);}
+        },'Shuffle Players')
+      );
+    };
+    const AddUserForm = ({ addUser,userInput,userTypeChange }) => {
+      return (
+        React.createElement("div", null,
+          React.createElement("form", {onSubmit:addUser, className:'inline'},
+           React.createElement("input", {onChange:userInput, className:'d-b', placeholder:'Add new player'}),
+           React.createElement("select", {onChange:userTypeChange},
+             React.createElement("option", {value:'type1'},'Type 1'),
+             React.createElement("option", {value:'type2'},'Type 2')
+           ),
+           React.createElement("input", {type:'submit', value:'Add', className:'d-b btn-primary'})
+          )
+        )
+      );
+    };
+    
+    window.id = 0;
+    class TodoApp extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = {
+          data: [],
+          addUserInput: '',
+          addUserType:'type1'
+        };
+        var storedPlayers = JSON.parse(localStorage.getItem('players'));
+        if(storedPlayers){
+          this.players = storedPlayers;
+          console.log(storedPlayers);
+        } else{
+          this.players = {type1:[],type2:[]}
+        }
+      }
+      userInput(e){
+        this.setState({addUserInput:e.target.value});
+      }
+      userTypeChange(e){
+        this.setState({addUserType:e.target.value});
+      }
+      addUser(e){
+        e.preventDefault();
+        this.players[this.state.addUserType].push({key:this.players[this.state.addUserType].length,name:this.state.addUserInput});
+        localStorage.setItem('players', JSON.stringify(this.players));
+      }
+      shufflePlayers(val) {
+        this.state.data = this.shuffle(val.type1);
+        this.shuffle(val.type2);
+        this.setState({ data: this.state.data });
+      }
+      handleRemove(val) {
+        console.log('blah');
+      }
+      shuffle(array) {
+        var currentIndex = array.length, temporaryValue, randomIndex;
+        while (0 !== currentIndex) {
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex -= 1;
+          temporaryValue = array[currentIndex];
+          array[currentIndex] = array[randomIndex];
+          array[randomIndex] = temporaryValue;
+        }
+        return array;
+      }
+      
+      render() {
+        return (
+          React.createElement("div", null,
+          React.createElement("div", null,
+          React.createElement(AddUserForm, { addUser:this.addUser.bind(this), userInput:this.userInput.bind(this), userTypeChange:this.userTypeChange.bind(this) }),
+          React.createElement(ShufflePlayersForm, { players:this.players, shuffleplayers: this.shufflePlayers.bind(this) })),
+          React.createElement("div", {className:"col-6"},
+          React.createElement("h4", {},'Team 1'),
+          React.createElement(PlayerList, { players:this.players.type1.slice(-((this.players.type1.length/2).toFixed(0))) }),
+          React.createElement(PlayerList, { players:this.players.type2.slice(-((this.players.type2.length/2).toFixed(0))) })
+        ),React.createElement("div", {className:"col-6"},
+          React.createElement("h4", {},'Team 2'),
+          React.createElement(PlayerList, { players:this.players.type1.slice(0,(this.players.type1.length/2).toFixed(0)) }),
+          React.createElement(PlayerList, { players:this.players.type2.slice(0,(this.players.type2.length/2).toFixed(0)) })
+        )));
+      }
+    }
+    ReactDOM.render(React.createElement(TodoApp, null), document.getElementById('container'));
+  </script>
+</body>
+</html>
