@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Google photos link</title>
+</head>
+<body>
+    
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script>
+        const regex = /\["(https:\/\/lh3\.googleusercontent\.com\/[a-zA-Z0-9\-_]*)"/g
+        function extractPhotos(content) {
+            const links = new Set()
+            let match;
+            while (match = regex.exec(content)) {
+                links.add(match[1])
+            } 
+            return Array.from(links)
+        }
+        $.get('https://photos.app.goo.gl/Muu38WYw5DgYTQ4b6', function(res){
+            extractPhotos(res);
+        })
+    </script>
+</body>
+</html>
