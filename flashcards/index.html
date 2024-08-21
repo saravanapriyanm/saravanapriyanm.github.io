@@ -63,8 +63,8 @@
           <button @click="nextCard()">Next Card</button>
 
           <div x-show="creatorMode">
-            <button @click="nextCard()">Add Card</button>
-            <button @click="nextCard()">Delete Card</button>
+            <button @click="addCard()">Add Card</button>
+            <button @click="removeCard()">Delete Card</button>
             <button
               @click="saveCards()"
               style="display: block; width: 100%; padding: 0.5em"
