@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arcade Projects - Player Select</title>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: radial-gradient(circle at center, #2a1a1a 0%, #0a0606 100%);
+        font-family: "Orbitron", monospace;
+        color: #f88;
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+
+      /* Retro CRT effect */
+      .crt-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.15),
+          rgba(0, 0, 0, 0.15) 1px,
+          transparent 1px,
+          transparent 2px
+        );
+        pointer-events: none;
+        z-index: 1000;
+      }
+
+      /* Arcade Cabinet */
+      .arcade-cabinet {
+        max-width: 1200px;
+        margin: 20px auto;
+        background: linear-gradient(45deg, #3d2020, #2a1515, #1f0f0f);
+        border-radius: 30px 30px 10px 10px;
+        padding: 30px;
+        box-shadow: 0 0 50px rgba(255, 136, 136, 0.3),
+          inset 0 0 30px rgba(255, 136, 136, 0.1);
+        position: relative;
+      }
+
+      .arcade-cabinet::before {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 20px;
+        background: linear-gradient(90deg, #f88, #ff9999, #f88);
+        border-radius: 10px;
+      }
+
+      /* Screen Header */
+      .screen-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .arcade-title {
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(45deg, #f88, #ff9999, #ffaaaa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 20px rgba(255, 136, 136, 0.5);
+        animation: glow 2s ease-in-out infinite alternate;
+        margin-bottom: 10px;
+      }
+
+      .arcade-subtitle {
+        font-size: 1.2rem;
+        color: #f88;
+        text-shadow: 0 0 10px rgba(255, 136, 136, 0.7);
+      }
+
+      /* Game Grid */
+      .game-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin: 40px 0;
+      }
+
+      /* Project Cards (Game Machines) */
+      .project-card {
+        background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+        border: 3px solid #f88;
+        border-radius: 15px;
+        padding: 25px;
+        position: relative;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        overflow: hidden;
+      }
+
+      .project-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 136, 136, 0.2),
+          transparent
+        );
+        transition: left 0.5s ease;
+      }
+
+      .project-card:hover::before {
+        left: 100%;
+      }
+
+      .project-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 30px rgba(255, 136, 136, 0.3),
+          0 0 50px rgba(255, 136, 136, 0.2);
+        border-color: #ff9999;
+      }
+
+      .project-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .project-icon {
+        font-size: 2rem;
+        margin-right: 15px;
+        animation: pulse 2s infinite;
+      }
+
+      .project-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #f88;
+        text-shadow: 0 0 10px rgba(255, 136, 136, 0.7);
+      }
+
+      .project-description {
+        color: #f88;
+        margin: 15px 0;
+        line-height: 1.6;
+      }
+
+      .tech-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 15px 0;
+      }
+
+      .tech-tag {
+        background: rgba(255, 136, 136, 0.2);
+        color: #f88;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        border: 1px solid #f88;
+      }
+
+      .project-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+      }
+
+      .status-indicator {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+      }
+
+      .status-live {
+        background: rgba(255, 136, 136, 0.3);
+        color: #f88;
+        border: 1px solid #f88;
+      }
+
+      .status-demo {
+        background: rgba(255, 136, 136, 0.2);
+        color: #f88;
+        border: 1px solid #f88;
+      }
+
+      .status-development {
+        background: rgba(255, 136, 136, 0.1);
+        color: #f88;
+        border: 1px solid #f88;
+      }
+
+      .play-button {
+        background: linear-gradient(45deg, #f88, #ff9999);
+        color: #000;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .play-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(255, 136, 136, 0.7);
+      }
+
+      /* Coin Slot Effect */
+      .coin-slot {
+        text-align: center;
+        margin: 40px 0;
+        padding: 20px;
+      }
+
+      .coin-slot-text {
+        font-size: 1.5rem;
+        color: #f88;
+        animation: blink 1.5s infinite;
+      }
+
+      /* Control Panel */
+      .control-panel {
+        background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 30px;
+        border: 2px solid #f88;
+      }
+
+      .controls-title {
+        color: #f88;
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      .control-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      .control-btn {
+        background: radial-gradient(circle, #f88, #cc6666);
+        color: #000;
+        border: 3px solid #f88;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .control-btn:hover {
+        transform: scale(0.95);
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Animations */
+      @keyframes glow {
+        from {
+          text-shadow: 0 0 20px rgba(255, 136, 136, 0.5);
+        }
+        to {
+          text-shadow: 0 0 30px rgba(255, 136, 136, 0.8),
+            0 0 40px rgba(255, 136, 136, 0.3);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0.3;
+        }
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 768px) {
+        .arcade-cabinet {
+          margin: 10px;
+          padding: 20px;
+        }
+
+        .arcade-title {
+          font-size: 2rem;
+        }
+
+        .game-grid {
+          grid-template-columns: 1fr;
+          gap: 15px;
+        }
+
+        .control-buttons {
+          gap: 10px;
+        }
+
+        .control-btn {
+          width: 50px;
+          height: 50px;
+        }
+      }
+    </style>
+  </head>
+  <body x-data="arcadeProjects()">
+    <div class="crt-overlay"></div>
+
+    <div class="arcade-cabinet">
+      <!-- Screen Header -->
+      <div class="screen-header">
+        <h1 class="arcade-title">ARCADE PROJECTS</h1>
+        <p class="arcade-subtitle">◄ SELECT YOUR GAME ►</p>
+      </div>
+
+      <!-- Coin Slot -->
+      <div class="coin-slot">
+        <div class="coin-slot-text">INSERT CURIOSITY TO CONTINUE</div>
+      </div>
+
+      <!-- Game Grid -->
+      <div class="game-grid">
+        <template x-for="project in projects" :key="project.id">
+          <div class="project-card" @click="selectProject(project)">
+            <div class="project-header">
+              <span class="project-icon" x-text="project.icon"></span>
+              <h3 class="project-title" x-text="project.title"></h3>
+            </div>
+
+            <p class="project-description" x-text="project.description"></p>
+
+            <div class="tech-stack">
+              <template x-for="tech in project.technologies">
+                <span class="tech-tag" x-text="tech"></span>
+              </template>
+            </div>
+
+            <div class="project-status">
+              <span
+                class="status-indicator"
+                :class="'status-' + project.status"
+                x-text="project.statusText"
+              >
+              </span>
+              <a
+                :href="project.url"
+                class="play-button"
+                target="_blank"
+                @click.stop
+              >
+                PLAY ►
+              </a>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Control Panel -->
+      <div class="control-panel">
+        <h3 class="controls-title">PLAYER CONTROLS</h3>
+        <div class="control-buttons">
+          <button
+            class="control-btn"
+            @click="filterProjects('all')"
+            :class="{ 'active': currentFilter === 'all' }"
+          >
+            ALL
+          </button>
+          <button
+            class="control-btn"
+            @click="filterProjects('live')"
+            :class="{ 'active': currentFilter === 'live' }"
+          >
+            LIVE
+          </button>
+          <button
+            class="control-btn"
+            @click="filterProjects('demo')"
+            :class="{ 'active': currentFilter === 'demo' }"
+          >
+            DEMO
+          </button>
+          <button
+            class="control-btn"
+            @click="filterProjects('dev')"
+            :class="{ 'active': currentFilter === 'dev' }"
+          >
+            DEV
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function arcadeProjects() {
+        return {
+          currentFilter: "all",
+          allProjects: [
+            {
+              id: 1,
+              icon: "🎮",
+              title: "TECH TETRIS",
+              description:
+                "Classic Tetris game with technology-themed pieces. Built with Alpine.js and Canvas API for smooth gameplay.",
+              technologies: ["Alpine.js", "Canvas", "JavaScript", "CSS3"],
+              status: "live",
+              statusText: "LIVE",
+              url: "../tetris.html",
+            },
+            {
+              id: 2,
+              icon: "🌐",
+              title: "PORTFOLIO SITE",
+              description:
+                "Personal portfolio website showcasing projects and skills with modern web technologies.",
+              technologies: ["HTML5", "CSS3", "JavaScript", "Responsive"],
+              status: "live",
+              statusText: "LIVE",
+              url: "../index.html",
+            },
+            {
+              id: 3,
+              icon: "💰",
+              title: "EXPENSE TRACKER",
+              description:
+                "Smart expense tracking application with data visualization and budget management features.",
+              technologies: ["Vue.js", "Firebase", "Chart.js", "PWA"],
+              status: "live",
+              statusText: "LIVE",
+              url: "../financy/index.html",
+            },
+            {
+              id: 4,
+              icon: "🎯",
+              title: "TEAM SHUFFLE",
+              description:
+                "Random team generator for organizing groups and teams with customizable options.",
+              technologies: ["React", "JavaScript", "CSS3", "Animations"],
+              status: "demo",
+              statusText: "DEMO",
+              url: "../team-shuffle/index.html",
+            },
+            {
+              id: 5,
+              icon: "📝",
+              title: "TAMIL NOTES",
+              description:
+                "Note-taking application with Tamil language support and offline capabilities.",
+              technologies: ["Vanilla JS", "IndexedDB", "PWA", "ServiceWorker"],
+              status: "demo",
+              statusText: "DEMO",
+              url: "../thamizh/index.html",
+            },
+            {
+              id: 6,
+              icon: "🚀",
+              title: "AI CHAT BOT",
+              description:
+                "Intelligent chatbot with natural language processing and machine learning capabilities.",
+              technologies: ["Python", "TensorFlow", "NLP", "Flask"],
+              status: "development",
+              statusText: "IN DEV",
+              url: "#",
+            },
+            {
+              id: 7,
+              icon: "📊",
+              title: "DATA VISUALIZER",
+              description:
+                "Interactive data visualization dashboard with real-time updates and custom charts.",
+              technologies: ["D3.js", "WebSocket", "Node.js", "MongoDB"],
+              status: "development",
+              statusText: "IN DEV",
+              url: "#",
+            },
+            {
+              id: 8,
+              icon: "🎨",
+              title: "CSS PLAYGROUND",
+              description:
+                "Interactive CSS editor and playground for experimenting with modern CSS features.",
+              technologies: ["CSS Grid", "Flexbox", "Animations", "Sass"],
+              status: "demo",
+              statusText: "DEMO",
+              url: "#",
+            },
+          ],
+          projects: [],
+
+          init() {
+            this.projects = this.allProjects;
+          },
+
+          filterProjects(filter) {
+            this.currentFilter = filter;
+            if (filter === "all") {
+              this.projects = this.allProjects;
+            } else if (filter === "live") {
+              this.projects = this.allProjects.filter(
+                (p) => p.status === "live"
+              );
+            } else if (filter === "demo") {
+              this.projects = this.allProjects.filter(
+                (p) => p.status === "demo"
+              );
+            } else if (filter === "dev") {
+              this.projects = this.allProjects.filter(
+                (p) => p.status === "development"
+              );
+            }
+          },
+
+          selectProject(project) {
+            // Add selection sound effect or animation here
+            console.log("Selected project:", project.title);
+
+            // You can add more interactive features here
+            // like project details modal, sound effects, etc.
+          },
+        };
+      }
+    </script>
+  </body>
+</html>
