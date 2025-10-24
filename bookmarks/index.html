@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bookmark Manager - Serverless & Collaborative</title>
-    <!-- Alpine.js will be replaced with vanilla JS below -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
       * {
         box-sizing: border-box;
@@ -294,15 +294,15 @@
     </style>
   </head>
   <body>
-    <div class="container" id="app">
+    <div class="container" id="app" x-data="bookmarkManager()">
       <header>
         <h1>📚 Bookmark Manager</h1>
         <p>Serverless & Collaborative with IPFS</p>
       </header>
 
       <!-- Status Messages -->
-      <div class="card" id="statusCard" style="display: none">
-        <div id="statusMessage" class="status"></div>
+      <div x-show="status.message" class="card">
+        <div :class="'status ' + status.type" x-text="status.message"></div>
       </div>
 
       <!-- Add Bookmark Form -->
@@ -311,31 +311,31 @@
         <div class="input-group">
           <input
             type="text"
-            id="titleInput"
+            x-model="newBookmark.title"
             placeholder="Title"
           />
           <input
             type="url"
-            id="urlInput"
+            x-model="newBookmark.url"
             placeholder="URL (https://...)"
           />
         </div>
         <textarea
-          id="descriptionInput"
+          x-model="newBookmark.description"
           placeholder="Description (optional)"
         ></textarea>
         <div style="margin-top: 1rem">
-          <button id="addBookmarkBtn">Add Bookmark</button>
+          <button @click="addBookmark()">Add Bookmark</button>
         </div>
       </div>
 
       <!-- Bookmarks List -->
       <div class="card">
         <h2 style="margin-bottom: 1rem; color: #2d3748">
-          My Bookmarks (<span id="bookmarkCount">0</span>)
+          My Bookmarks (<span x-text="bookmarks.length"></span>)
         </h2>
 
-        <div id="emptyState" class="empty-state">
+        <div x-show="bookmarks.length === 0" class="empty-state">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -352,7 +352,32 @@
           <p>No bookmarks yet. Add your first bookmark above!</p>
         </div>
 
-        <div id="bookmarksList"></div>
+        <template x-for="(bookmark, index) in bookmarks">
+          <div class="bookmark-item">
+            <div class="bookmark-header">
+              <div style="flex: 1">
+                <div class="bookmark-title" x-text="bookmark.title"></div>
+                <a
+                  :href="bookmark.url"
+                  class="bookmark-url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  x-text="bookmark.url"
+                ></a>
+                <div
+                  x-show="bookmark.description"
+                  class="bookmark-description"
+                  x-text="bookmark.description"
+                ></div>
+              </div>
+              <div class="bookmark-actions">
+                <button class="danger" @click="deleteBookmark(index)">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
 
         <!-- IPFS Collaboration Section -->
         <div class="ipfs-section">
@@ -361,42 +386,47 @@
           <div class="ipfs-actions">
             <button
               class="secondary"
-              id="exportBtn"
+              @click="exportToIPFS()"
+              :disabled="ipfsLoading || bookmarks.length === 0"
             >
-              <span id="exportBtnText">Export to IPFS</span>
-              <span id="exportBtnLoading" style="display: none">
+              <span x-show="!ipfsLoading">Export to IPFS</span>
+              <span x-show="ipfsLoading">
                 <span class="loading"></span> Exporting...
               </span>
             </button>
             
-            <button id="importToggleBtn">
+            <button
+              @click="showImportPrompt = !showImportPrompt"
+              :disabled="ipfsLoading"
+            >
               Import from IPFS
             </button>
             
-            <button id="downloadBtn">
+            <button @click="downloadJSON()" :disabled="bookmarks.length === 0">
               Download JSON
             </button>
           </div>
 
-          <div id="ipfsHashDisplay" class="ipfs-hash" style="display: none">
-            <strong>IPFS Hash:</strong> <span id="ipfsHashValue"></span>
+          <div x-show="ipfsHash" class="ipfs-hash">
+            <strong>IPFS Hash:</strong> <span x-text="ipfsHash"></span>
             <br />
             <small>Share this hash to collaborate with others!</small>
           </div>
 
-          <div id="importPrompt" style="margin-top: 1rem; display: none">
+          <div x-show="showImportPrompt" style="margin-top: 1rem">
             <input
               type="text"
-              id="importHashInput"
+              x-model="importHash"
               placeholder="Enter IPFS hash to import bookmarks"
               style="width: 100%; margin-bottom: 0.5rem"
             />
             <button
               class="secondary"
-              id="importBtn"
+              @click="importFromIPFS()"
+              :disabled="!importHash || ipfsLoading"
             >
-              <span id="importBtnText">Import</span>
-              <span id="importBtnLoading" style="display: none">
+              <span x-show="!ipfsLoading">Import</span>
+              <span x-show="ipfsLoading">
                 <span class="loading"></span> Importing...
               </span>
             </button>
@@ -406,310 +436,171 @@
     </div>
 
     <script>
-      // Bookmark Manager - Vanilla JavaScript Implementation
-      class BookmarkManager {
-        constructor() {
-          this.bookmarks = [];
-          this.ipfsHash = '';
-          this.ipfsLoading = false;
-          this.showImportPrompt = false;
-          
-          // DOM elements
-          this.titleInput = document.getElementById('titleInput');
-          this.urlInput = document.getElementById('urlInput');
-          this.descriptionInput = document.getElementById('descriptionInput');
-          this.addBookmarkBtn = document.getElementById('addBookmarkBtn');
-          this.bookmarksList = document.getElementById('bookmarksList');
-          this.emptyState = document.getElementById('emptyState');
-          this.bookmarkCount = document.getElementById('bookmarkCount');
-          this.statusCard = document.getElementById('statusCard');
-          this.statusMessage = document.getElementById('statusMessage');
-          this.exportBtn = document.getElementById('exportBtn');
-          this.importToggleBtn = document.getElementById('importToggleBtn');
-          this.downloadBtn = document.getElementById('downloadBtn');
-          this.importPrompt = document.getElementById('importPrompt');
-          this.importHashInput = document.getElementById('importHashInput');
-          this.importBtn = document.getElementById('importBtn');
-          this.ipfsHashDisplay = document.getElementById('ipfsHashDisplay');
-          this.ipfsHashValue = document.getElementById('ipfsHashValue');
-          
-          this.init();
-        }
+      // Bookmark Manager - Alpine.js Implementation
+      function bookmarkManager() {
+        return {
+          bookmarks: [],
+          newBookmark: {
+            title: '',
+            url: '',
+            description: ''
+          },
+          status: {
+            message: '',
+            type: 'info'
+          },
+          ipfsHash: '',
+          importHash: '',
+          showImportPrompt: false,
+          ipfsLoading: false,
 
-        init() {
-          // Load bookmarks from localStorage
-          this.loadBookmarks();
-          this.render();
-          this.showStatus('Bookmark Manager loaded. Data is stored locally in your browser.', 'info');
-          
-          // Event listeners
-          this.addBookmarkBtn.addEventListener('click', () => this.addBookmark());
-          this.titleInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') this.addBookmark();
-          });
-          this.urlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') this.addBookmark();
-          });
-          this.exportBtn.addEventListener('click', () => this.exportToIPFS());
-          this.importToggleBtn.addEventListener('click', () => this.toggleImportPrompt());
-          this.downloadBtn.addEventListener('click', () => this.downloadJSON());
-          this.importBtn.addEventListener('click', () => this.importFromIPFS());
-        }
+          init() {
+            this.loadBookmarks();
+            this.showStatus('Bookmark Manager loaded. Data is stored locally in your browser.', 'info');
+          },
 
-        loadBookmarks() {
-          const saved = localStorage.getItem('bookmarks');
-          if (saved) {
-            try {
-              this.bookmarks = JSON.parse(saved);
-            } catch (error) {
-              console.error('Error loading bookmarks:', error);
-              this.bookmarks = [];
+          loadBookmarks() {
+            const saved = localStorage.getItem('bookmarks');
+            if (saved) {
+              try {
+                this.bookmarks = JSON.parse(saved);
+              } catch (error) {
+                console.error('Error loading bookmarks:', error);
+                this.bookmarks = [];
+              }
             }
-          }
-        }
+          },
 
-        saveBookmarks() {
-          localStorage.setItem('bookmarks', JSON.stringify(this.bookmarks));
-        }
+          saveBookmarks() {
+            localStorage.setItem('bookmarks', JSON.stringify(this.bookmarks));
+          },
 
-        addBookmark() {
-          const title = this.titleInput.value.trim();
-          const url = this.urlInput.value.trim();
-          const description = this.descriptionInput.value.trim();
-
-          if (!title || !url) {
-            this.showStatus('Please provide both title and URL', 'error');
-            return;
-          }
-
-          // Basic URL validation
-          try {
-            new URL(url);
-          } catch {
-            this.showStatus('Please enter a valid URL', 'error');
-            return;
-          }
-
-          this.bookmarks.unshift({
-            title: title,
-            url: url,
-            description: description,
-            createdAt: new Date().toISOString(),
-          });
-
-          this.saveBookmarks();
-          this.showStatus('Bookmark added successfully!', 'success');
-
-          // Reset form
-          this.titleInput.value = '';
-          this.urlInput.value = '';
-          this.descriptionInput.value = '';
-          
-          this.render();
-        }
-
-        deleteBookmark(index) {
-          if (confirm('Are you sure you want to delete this bookmark?')) {
-            this.bookmarks.splice(index, 1);
-            this.saveBookmarks();
-            this.showStatus('Bookmark deleted', 'info');
-            this.render();
-          }
-        }
-
-        render() {
-          // Update count
-          this.bookmarkCount.textContent = this.bookmarks.length;
-
-          // Show/hide empty state
-          if (this.bookmarks.length === 0) {
-            this.emptyState.style.display = 'block';
-            this.bookmarksList.innerHTML = '';
-            this.exportBtn.disabled = true;
-            this.downloadBtn.disabled = true;
-          } else {
-            this.emptyState.style.display = 'none';
-            this.exportBtn.disabled = false;
-            this.downloadBtn.disabled = false;
-            
-            // Render bookmarks
-            this.bookmarksList.innerHTML = this.bookmarks.map((bookmark, index) => `
-              <div class="bookmark-item">
-                <div class="bookmark-header">
-                  <div style="flex: 1">
-                    <div class="bookmark-title">${this.escapeHtml(bookmark.title)}</div>
-                    <a
-                      href="${this.escapeHtml(bookmark.url)}"
-                      class="bookmark-url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >${this.escapeHtml(bookmark.url)}</a>
-                    ${bookmark.description ? `<div class="bookmark-description">${this.escapeHtml(bookmark.description)}</div>` : ''}
-                  </div>
-                  <div class="bookmark-actions">
-                    <button class="danger" onclick="app.deleteBookmark(${index})">
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `).join('');
-          }
-        }
-
-        escapeHtml(text) {
-          const div = document.createElement('div');
-          div.textContent = text;
-          return div.innerHTML;
-        }
-
-        showStatus(message, type = 'info') {
-          this.statusMessage.textContent = message;
-          this.statusMessage.className = `status ${type}`;
-          this.statusCard.style.display = 'block';
-          
-          setTimeout(() => {
-            this.statusCard.style.display = 'none';
-          }, 5000);
-        }
-
-        async exportToIPFS() {
-          this.ipfsLoading = true;
-          this.updateLoadingState('export', true);
-          
-          try {
-            const data = JSON.stringify(this.bookmarks, null, 2);
-            
-            // For demo purposes, we'll create a hash from the data
-            const hash = await this.generateHash(data);
-            this.ipfsHash = `Qm${hash.substring(0, 44)}`;
-            
-            // Store the mapping in localStorage for demo
-            localStorage.setItem(`ipfs_${this.ipfsHash}`, data);
-            
-            this.ipfsHashValue.textContent = this.ipfsHash;
-            this.ipfsHashDisplay.style.display = 'block';
-            
-            this.showStatus(
-              'Bookmarks exported to IPFS! Share the hash to collaborate.',
-              'success'
-            );
-          } catch (error) {
-            console.error('Export error:', error);
-            this.showStatus('Error exporting to IPFS', 'error');
-          } finally {
-            this.ipfsLoading = false;
-            this.updateLoadingState('export', false);
-          }
-        }
-
-        toggleImportPrompt() {
-          this.showImportPrompt = !this.showImportPrompt;
-          this.importPrompt.style.display = this.showImportPrompt ? 'block' : 'none';
-        }
-
-        async importFromIPFS() {
-          const importHash = this.importHashInput.value.trim();
-          
-          if (!importHash) {
-            this.showStatus('Please enter an IPFS hash', 'error');
-            return;
-          }
-
-          this.ipfsLoading = true;
-          this.updateLoadingState('import', true);
-          
-          try {
-            // For demo purposes, retrieve from localStorage
-            const data = localStorage.getItem(`ipfs_${importHash}`);
-            
-            if (!data) {
-              this.showStatus(
-                'Hash not found locally. In production, this would fetch from IPFS network.',
-                'error'
-              );
-              this.ipfsLoading = false;
-              this.updateLoadingState('import', false);
+          addBookmark() {
+            if (!this.newBookmark.title.trim() || !this.newBookmark.url.trim()) {
+              this.showStatus('Please provide both title and URL', 'error');
               return;
             }
 
-            const importedBookmarks = JSON.parse(data);
-            
-            if (!Array.isArray(importedBookmarks)) {
-              throw new Error('Invalid bookmark data');
+            try {
+              new URL(this.newBookmark.url);
+            } catch {
+              this.showStatus('Please enter a valid URL', 'error');
+              return;
             }
 
-            // Merge imported bookmarks (avoid duplicates by URL)
-            const existingUrls = new Set(this.bookmarks.map((b) => b.url));
-            let newCount = 0;
-
-            importedBookmarks.forEach((bookmark) => {
-              if (!existingUrls.has(bookmark.url)) {
-                this.bookmarks.push(bookmark);
-                newCount++;
-              }
+            this.bookmarks.unshift({
+              title: this.newBookmark.title,
+              url: this.newBookmark.url,
+              description: this.newBookmark.description,
+              createdAt: new Date().toISOString()
             });
 
             this.saveBookmarks();
-            this.showStatus(
-              `Imported ${newCount} new bookmarks from IPFS!`,
-              'success'
-            );
-            this.importHashInput.value = '';
-            this.showImportPrompt = false;
-            this.importPrompt.style.display = 'none';
-            this.render();
-          } catch (error) {
-            console.error('Import error:', error);
-            this.showStatus('Error importing from IPFS', 'error');
-          } finally {
-            this.ipfsLoading = false;
-            this.updateLoadingState('import', false);
+            this.showStatus('Bookmark added successfully!', 'success');
+            
+            this.newBookmark = { title: '', url: '', description: '' };
+          },
+
+          deleteBookmark(index) {
+            if (confirm('Are you sure you want to delete this bookmark?')) {
+              this.bookmarks.splice(index, 1);
+              this.saveBookmarks();
+              this.showStatus('Bookmark deleted', 'info');
+            }
+          },
+
+          showStatus(message, type = 'info') {
+            this.status = { message, type };
+            setTimeout(() => {
+              this.status = { message: '', type: 'info' };
+            }, 5000);
+          },
+
+          async exportToIPFS() {
+            this.ipfsLoading = true;
+            try {
+              const data = JSON.stringify(this.bookmarks, null, 2);
+              const hash = await this.generateHash(data);
+              this.ipfsHash = `Qm${hash.substring(0, 44)}`;
+              
+              localStorage.setItem(`ipfs_${this.ipfsHash}`, data);
+              
+              this.showStatus('Bookmarks exported to IPFS! Share the hash to collaborate.', 'success');
+            } catch (error) {
+              console.error('Export error:', error);
+              this.showStatus('Error exporting to IPFS', 'error');
+            } finally {
+              this.ipfsLoading = false;
+            }
+          },
+
+          async importFromIPFS() {
+            if (!this.importHash.trim()) {
+              this.showStatus('Please enter an IPFS hash', 'error');
+              return;
+            }
+
+            this.ipfsLoading = true;
+            try {
+              const data = localStorage.getItem(`ipfs_${this.importHash}`);
+              
+              if (!data) {
+                this.showStatus(
+                  'Hash not found locally. In production, this would fetch from IPFS network.',
+                  'error'
+                );
+                this.ipfsLoading = false;
+                return;
+              }
+
+              const importedBookmarks = JSON.parse(data);
+              
+              if (!Array.isArray(importedBookmarks)) {
+                throw new Error('Invalid bookmark data');
+              }
+
+              const existingUrls = new Set(this.bookmarks.map(b => b.url));
+              let newCount = 0;
+
+              importedBookmarks.forEach(bookmark => {
+                if (!existingUrls.has(bookmark.url)) {
+                  this.bookmarks.push(bookmark);
+                  newCount++;
+                }
+              });
+
+              this.saveBookmarks();
+              this.showStatus(`Imported ${newCount} new bookmarks from IPFS!`, 'success');
+              this.importHash = '';
+              this.showImportPrompt = false;
+            } catch (error) {
+              console.error('Import error:', error);
+              this.showStatus('Error importing from IPFS', 'error');
+            } finally {
+              this.ipfsLoading = false;
+            }
+          },
+
+          async generateHash(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          },
+
+          downloadJSON() {
+            const dataStr = JSON.stringify(this.bookmarks, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `bookmarks-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            this.showStatus('Bookmarks downloaded as JSON', 'success');
           }
-        }
-
-        updateLoadingState(type, loading) {
-          if (type === 'export') {
-            document.getElementById('exportBtnText').style.display = loading ? 'none' : 'inline';
-            document.getElementById('exportBtnLoading').style.display = loading ? 'inline' : 'none';
-            this.exportBtn.disabled = loading;
-          } else if (type === 'import') {
-            document.getElementById('importBtnText').style.display = loading ? 'none' : 'inline';
-            document.getElementById('importBtnLoading').style.display = loading ? 'inline' : 'none';
-            this.importBtn.disabled = loading;
-          }
-        }
-
-        async generateHash(str) {
-          // Simple hash generation for demo
-          const encoder = new TextEncoder();
-          const data = encoder.encode(str);
-          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        downloadJSON() {
-          const dataStr = JSON.stringify(this.bookmarks, null, 2);
-          const dataBlob = new Blob([dataStr], { type: 'application/json' });
-          const url = URL.createObjectURL(dataBlob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `bookmarks-${new Date().toISOString().split('T')[0]}.json`;
-          link.click();
-          URL.revokeObjectURL(url);
-          this.showStatus('Bookmarks downloaded as JSON', 'success');
-        }
-      }
-
-      // Initialize the app when the DOM is ready
-      let app;
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          app = new BookmarkManager();
-        });
-      } else {
-        app = new BookmarkManager();
+        };
       }
     </script>
   </body>
