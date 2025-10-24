@@ -542,15 +542,25 @@
 
             this.ipfsLoading = true;
             try {
-              const data = localStorage.getItem(`ipfs_${this.importHash}`);
+              // First, try to get from local storage
+              let data = localStorage.getItem(`ipfs_${this.importHash}`);
               
+              // If not found locally, fetch from IPFS network
               if (!data) {
-                this.showStatus(
-                  'Hash not found locally. In production, this would fetch from IPFS network.',
-                  'error'
-                );
-                this.ipfsLoading = false;
-                return;
+                this.showStatus('Fetching from IPFS network...', 'info');
+                data = await this.fetchFromIPFSNetwork(this.importHash);
+                
+                if (!data) {
+                  this.showStatus(
+                    'Failed to fetch from IPFS network. Please check the hash and try again.',
+                    'error'
+                  );
+                  this.ipfsLoading = false;
+                  return;
+                }
+                
+                // Cache the fetched data locally for future use
+                localStorage.setItem(`ipfs_${this.importHash}`, data);
               }
 
               const importedBookmarks = JSON.parse(data);
@@ -579,6 +589,42 @@
             } finally {
               this.ipfsLoading = false;
             }
+          },
+
+          async fetchFromIPFSNetwork(hash) {
+            // List of IPFS gateways to try
+            const gateways = [
+              `https://ipfs.io/ipfs/${hash}`,
+              `https://dweb.link/ipfs/${hash}`,
+              `https://cloudflare-ipfs.com/ipfs/${hash}`,
+              `https://gateway.pinata.cloud/ipfs/${hash}`
+            ];
+
+            // Try each gateway until one succeeds
+            for (const gatewayUrl of gateways) {
+              try {
+                const response = await fetch(gatewayUrl, {
+                  method: 'GET',
+                  headers: {
+                    'Accept': 'application/json'
+                  },
+                  // Set a timeout
+                  signal: AbortSignal.timeout(10000)
+                });
+
+                if (response.ok) {
+                  const text = await response.text();
+                  // Validate that it's valid JSON
+                  JSON.parse(text);
+                  return text;
+                }
+              } catch (error) {
+                console.warn(`Failed to fetch from ${gatewayUrl}:`, error.message);
+                // Continue to next gateway
+              }
+            }
+
+            return null;
           },
 
           async generateHash(str) {
