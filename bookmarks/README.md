@@ -40,11 +40,12 @@ A minimal, serverless bookmark manager built with Alpine.js and IPFS for collabo
 
 ## Technical Details
 
-- **Framework**: Alpine.js 3.x
+- **Framework**: Vanilla JavaScript (Alpine.js-style architecture)
 - **Storage**: localStorage (client-side)
 - **Collaboration**: IPFS (simulated with localStorage for demo, ready for real IPFS integration)
 - **No backend required**: Fully client-side application
 - **No build step**: Works directly in the browser
+- **No external dependencies**: Everything runs in the browser without CDN dependencies
 
 ## Future Enhancements
 
