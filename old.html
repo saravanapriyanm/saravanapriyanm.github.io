@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      Saravanapriyan M - Technical Lead | Frontend, NodeJS, Python dev | CSS
+      enthusiast | Microsoft MCT | Occasional designer
+    </title>
+    <meta
+      name="description"
+      content="Saravanapriyan M is a Technical Lead with expertise in Frontend, NodeJS, and Python development. A CSS enthusiast, Microsoft MCT, and occasional designer."
+    />
+    <meta
+      name="keywords"
+      content="Saravanapriyan M, Technical Lead, Frontend Developer, NodeJS, Python, CSS, Microsoft MCT, Designer, Developer in Chennai, India, mspriyan, msaravanapriyan, priyan developer"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="img/me-emoji.png" />
+    <link rel="stylesheet" href="css/bs-grid.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="container-fluid">
+        <div class="row full-page">
+          <div class="col-md-6 text-center">
+            <h1 class="page-title">
+              <span>
+                Hello.<br />
+                I am Saravanapriyan,<br />
+                <div>
+                  <span class="typed"></span>
+                </div>
+                <a class="contact" href="/works">🎨 Portfolio</a>
+                <button class="contact feedback" onclick="toggleModal()">
+                  ⭐ Feedback?
+                </button>
+                <br />
+                <a class="contact" href="mailto:saravanapriyanm@gmail.com"
+                  >saravanapriyanm@gmail.com</a
+                >
+              </span>
+            </h1>
+          </div>
+          <div class="col-md-6 tags-wrap">
+            <div class="tags">
+              <h2 class="text-center">SKILLS</h2>
+              <ul>
+                <li class="saturn">HTML</li>
+                <li>CSS</li>
+                <li>Javascript</li>
+                <li>Angular</li>
+                <li>React</li>
+                <li>VueJs</li>
+                <li>Flutter</li>
+                <li>NodeJS</li>
+                <li>MongoDB</li>
+                <li>Azure</li>
+                <li>REST</li>
+                <li>GraphQL</li>
+                <li>Python</li>
+                <li>AlpineJS</li>
+                <li>XD/Figma</li>
+                <li>GIT</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <!-- <div class="row bg-1">
+				<div class="col-md-6"><div class="big-sym">?</div></div>
+				<div class="col-md-6">
+					<div class="section-content">
+						<h2>I am web designer<em>(but not limited to it)</em>.</h2>
+						<p>
+							<strong>Few things I love:</strong>
+							<ul>
+								<li>Beautiful, well structured code</li>
+								<li>Minimal, data-driven design</li>
+								<li>Automation</li>
+							</ul>
+						</p>
+					</div>
+				</div>
+			</div> -->
+      </div>
+    </div>
+    <div id="modal" style="display: none">
+      <div>
+        <div class="flex">
+          <button onclick="customAlert(true)">You are good.</button>
+          <div class="hiccup">
+            <button onclick="customAlert(false)">You are lame.</button>
+          </div>
+        </div>
+        <a href="javascript:customAlert(true)" class="big-sym"
+          >Close (Also means I am good)</a
+        >
+      </div>
+    </div>
+    <div id="alert" style="display: none"></div>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.11"></script>
+    <script>
+      var options = {
+        strings: [
+          "<> Front-end Developer",
+          "{} CSS Enthusiast",
+          "✂ Occassional Designer",
+          "❤ Casual Gamer",
+        ],
+        typeSpeed: 75,
+        loop: true,
+      };
+      var typed = new Typed(".typed", options);
+      var modalShown = false;
+      function toggleModal() {
+        if (modalShown) {
+          document.getElementById("modal").style.display = "none";
+          modalShown = false;
+        } else {
+          document.getElementById("modal").style.display = "flex";
+          modalShown = true;
+        }
+      }
+      function customAlert(isGood) {
+        if (isGood) {
+          document.getElementById("alert").innerHTML =
+            "Thanks. That means a lot.";
+          toggleModal();
+        } else {
+          document.getElementById("alert").innerHTML = "Isn't it hard to lie?";
+          toggleModal();
+        }
+        document.getElementById("alert").style.display = "block";
+        setTimeout(() => {
+          console.log("timeout");
+          document.getElementById("alert").style.display = "none";
+        }, 5000);
+      }
+    </script>
+  </body>
+</html>
