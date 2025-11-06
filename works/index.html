@@ -3,13 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Arcade Projects - Player Select</title>
+    <link rel="icon" type="image/png" href="../img/sp-logo.svg" />
+    <link rel="stylesheet" href="../css/tetris.css" />
+    <title>Projects - Saravanapriyan M</title>
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
     ></script>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
       * {
         margin: 0;
@@ -17,125 +19,54 @@
         box-sizing: border-box;
       }
 
-      body {
-        background: radial-gradient(circle at center, #2a1a1a 0%, #0a0606 100%);
-        font-family: "Orbitron", monospace;
-        color: #f88;
-        overflow-x: hidden;
-        min-height: 100vh;
-      }
-
-      /* Retro CRT effect */
-      .crt-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: repeating-linear-gradient(
-          0deg,
-          rgba(0, 0, 0, 0.15),
-          rgba(0, 0, 0, 0.15) 1px,
-          transparent 1px,
-          transparent 2px
-        );
-        pointer-events: none;
-        z-index: 1000;
-      }
-
-      /* Arcade Cabinet */
-      .arcade-cabinet {
+      /* Container */
+      .projects-container {
         max-width: 1200px;
-        margin: 20px auto;
-        background: linear-gradient(45deg, #3d2020, #2a1515, #1f0f0f);
-        border-radius: 30px 30px 10px 10px;
-        padding: 30px;
-        box-shadow: 0 0 50px rgba(255, 136, 136, 0.3),
-          inset 0 0 30px rgba(255, 136, 136, 0.1);
-        position: relative;
+        margin: 0 auto;
+        padding: 40px 20px;
       }
 
-      .arcade-cabinet::before {
-        content: "";
-        position: absolute;
-        top: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 200px;
-        height: 20px;
-        background: linear-gradient(90deg, #f88, #ff9999, #f88);
-        border-radius: 10px;
-      }
-
-      /* Screen Header */
-      .screen-header {
+      /* Header */
+      .header {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 50px;
       }
 
-      .arcade-title {
-        font-size: 3rem;
-        font-weight: 900;
-        background: linear-gradient(45deg, #f88, #ff9999, #ffaaaa);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: 0 0 20px rgba(255, 136, 136, 0.5);
-        animation: glow 2s ease-in-out infinite alternate;
+      .title {
+        font-size: 2.5rem;
+        font-weight: 700;
         margin-bottom: 10px;
       }
 
-      .arcade-subtitle {
-        font-size: 1.2rem;
-        color: #f88;
-        text-shadow: 0 0 10px rgba(255, 136, 136, 0.7);
+      .subtitle {
+        font-size: 1rem;
+        color: #666;
+        font-weight: 400;
       }
 
-      /* Game Grid */
-      .game-grid {
+      /* Projects Grid */
+      .projects-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
         margin: 40px 0;
       }
 
-      /* Project Cards (Game Machines) */
+      /* Project Card */
       .project-card {
-        background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
-        border: 3px solid #f88;
-        border-radius: 15px;
-        padding: 25px;
-        position: relative;
-        transition: all 0.3s ease;
+        background: #ffffff22;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        transition: all 0.2s ease;
         cursor: pointer;
         overflow: hidden;
       }
 
-      .project-card::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 136, 136, 0.2),
-          transparent
-        );
-        transition: left 0.5s ease;
-      }
-
-      .project-card:hover::before {
-        left: 100%;
-      }
-
       .project-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 10px 30px rgba(255, 136, 136, 0.3),
-          0 0 50px rgba(255, 136, 136, 0.2);
-        border-color: #ff9999;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #d0d0d0;
       }
 
       .project-header {
@@ -151,16 +82,15 @@
       }
 
       .project-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #f88;
-        text-shadow: 0 0 10px rgba(255, 136, 136, 0.7);
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 8px;
       }
 
       .project-description {
-        color: #f88;
-        margin: 15px 0;
-        line-height: 1.6;
+        margin: 10px 0;
+        line-height: 1.5;
+        font-size: 0.95rem;
       }
 
       .tech-stack {
@@ -171,12 +101,12 @@
       }
 
       .tech-tag {
-        background: rgba(255, 136, 136, 0.2);
-        color: #f88;
-        padding: 4px 12px;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        border: 1px solid #f88;
+        background: #f0f0f088;
+        color: #333;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        border: 1px solid #e0e0e0;
       }
 
       .project-status {
@@ -187,180 +117,146 @@
       }
 
       .status-indicator {
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: bold;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
       }
 
       .status-live {
-        background: rgba(255, 136, 136, 0.3);
-        color: #f88;
-        border: 1px solid #f88;
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
       }
 
       .status-demo {
-        background: rgba(255, 136, 136, 0.2);
-        color: #f88;
-        border: 1px solid #f88;
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
       }
 
       .status-development {
-        background: rgba(255, 136, 136, 0.1);
-        color: #f88;
-        border: 1px solid #f88;
+        background: #e7e8ea;
+        color: #383d41;
+        border: 1px solid #d6d8db;
       }
 
-      .play-button {
-        background: linear-gradient(45deg, #f88, #ff9999);
-        color: #000;
+      .visit-button {
+        background: #1a1a1a;
+        color: #fff;
         border: none;
-        padding: 10px 20px;
-        border-radius: 25px;
-        font-weight: bold;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 500;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         text-decoration: none;
         display: inline-block;
+        font-size: 0.9rem;
       }
 
-      .play-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 0 20px rgba(255, 136, 136, 0.7);
+      .visit-button:hover {
+        background: #333;
       }
 
-      /* Coin Slot Effect */
-      .coin-slot {
-        text-align: center;
-        margin: 40px 0;
-        padding: 20px;
-      }
-
-      .coin-slot-text {
-        font-size: 1.5rem;
-        color: #f88;
-        animation: blink 1.5s infinite;
-      }
-
-      /* Control Panel */
-      .control-panel {
-        background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-        border-radius: 15px;
+      /* Filter Panel */
+      .filter-panel {
+        background: #fff;
+        border-radius: 8px;
         padding: 20px;
         margin-top: 30px;
-        border: 2px solid #f88;
+        border: 1px solid #e0e0e0;
       }
 
-      .controls-title {
-        color: #f88;
-        font-size: 1.3rem;
+      .filter-title {
+        color: #1a1a1a;
+        font-size: 1rem;
         margin-bottom: 15px;
         text-align: center;
+        font-weight: 600;
       }
 
-      .control-buttons {
+      .filter-buttons {
         display: flex;
         justify-content: center;
-        gap: 20px;
+        gap: 10px;
         flex-wrap: wrap;
       }
 
-      .control-btn {
-        background: radial-gradient(circle, #f88, #cc6666);
-        color: #000;
-        border: 3px solid #f88;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        font-weight: bold;
+      .filter-btn {
+        background: #f5f5f5;
+        color: #1a1a1a;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 8px 16px;
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        font-size: 0.9rem;
       }
 
-      .control-btn:hover {
-        transform: scale(0.95);
-        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+      .filter-btn:hover {
+        background: #e8e8e8;
+      }
+
+      .filter-btn.active {
+        background: #1a1a1a;
+        color: #fff;
+        border-color: #1a1a1a;
       }
 
       /* Animations */
-      @keyframes glow {
+      @keyframes fadeIn {
         from {
-          text-shadow: 0 0 20px rgba(255, 136, 136, 0.5);
+          opacity: 0;
+          transform: translateY(10px);
         }
         to {
-          text-shadow: 0 0 30px rgba(255, 136, 136, 0.8),
-            0 0 40px rgba(255, 136, 136, 0.3);
-        }
-      }
-
-      @keyframes pulse {
-        0%,
-        100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.1);
-        }
-      }
-
-      @keyframes blink {
-        0%,
-        50% {
           opacity: 1;
+          transform: translateY(0);
         }
-        51%,
-        100% {
-          opacity: 0.3;
-        }
+      }
+
+      .project-card {
+        animation: fadeIn 0.3s ease;
       }
 
       /* Mobile Responsive */
       @media (max-width: 768px) {
-        .arcade-cabinet {
-          margin: 10px;
-          padding: 20px;
+        .projects-container {
+          padding: 20px 10px;
         }
 
-        .arcade-title {
-          font-size: 2rem;
+        .title {
+          font-size: 1.8rem;
         }
 
-        .game-grid {
+        .projects-grid {
           grid-template-columns: 1fr;
           gap: 15px;
         }
 
-        .control-buttons {
-          gap: 10px;
+        .filter-buttons {
+          gap: 8px;
         }
 
-        .control-btn {
-          width: 50px;
-          height: 50px;
+        .filter-btn {
+          padding: 6px 12px;
+          font-size: 0.85rem;
         }
       }
     </style>
   </head>
-  <body x-data="arcadeProjects()">
-    <div class="crt-overlay"></div>
-
-    <div class="arcade-cabinet">
-      <!-- Screen Header -->
-      <div class="screen-header">
-        <h1 class="arcade-title">ARCADE PROJECTS</h1>
-        <p class="arcade-subtitle">◄ SELECT YOUR GAME ►</p>
+  <body x-data="projectsApp()">
+    <div class="projects-container">
+      <!-- Header -->
+      <div class="header">
+        <h1 class="title">Projects</h1>
+        <p class="subtitle">A selection of recent projects</p>
       </div>
 
-      <!-- Coin Slot -->
-      <div class="coin-slot">
-        <div class="coin-slot-text">INSERT CURIOSITY TO CONTINUE</div>
-      </div>
-
-      <!-- Game Grid -->
-      <div class="game-grid">
+      <!-- Projects Grid -->
+      <div class="projects-grid">
         <template x-for="project in projects" :key="project.id">
           <div class="project-card" @click="selectProject(project)">
             <div class="project-header">
@@ -385,55 +281,20 @@
               </span>
               <a
                 :href="project.url"
-                class="play-button"
+                class="visit-button"
                 target="_blank"
                 @click.stop
               >
-                PLAY ►
+                Visit
               </a>
             </div>
           </div>
         </template>
       </div>
-
-      <!-- Control Panel -->
-      <div class="control-panel">
-        <h3 class="controls-title">PLAYER CONTROLS</h3>
-        <div class="control-buttons">
-          <button
-            class="control-btn"
-            @click="filterProjects('all')"
-            :class="{ 'active': currentFilter === 'all' }"
-          >
-            ALL
-          </button>
-          <button
-            class="control-btn"
-            @click="filterProjects('live')"
-            :class="{ 'active': currentFilter === 'live' }"
-          >
-            LIVE
-          </button>
-          <button
-            class="control-btn"
-            @click="filterProjects('demo')"
-            :class="{ 'active': currentFilter === 'demo' }"
-          >
-            DEMO
-          </button>
-          <button
-            class="control-btn"
-            @click="filterProjects('dev')"
-            :class="{ 'active': currentFilter === 'dev' }"
-          >
-            DEV
-          </button>
-        </div>
-      </div>
     </div>
 
     <script>
-      function arcadeProjects() {
+      function projectsApp() {
         return {
           currentFilter: "all",
           allProjects: [
@@ -513,13 +374,7 @@
             }
           },
 
-          selectProject(project) {
-            // Add selection sound effect or animation here
-            console.log("Selected project:", project.title);
-
-            // You can add more interactive features here
-            // like project details modal, sound effects, etc.
-          },
+          selectProject(project) {},
         };
       }
     </script>

@@ -79,11 +79,11 @@ body {
 hr {
   width: 10em;
   border: 0;
-  border-bottom: 1px dashed #f88;
+  border-bottom: 1px dashed #f43;
   margin: 20px 0;
 }
 a {
-  color: #f88;
+  color: #f43;
   text-decoration: none;
 }
 @keyframes slideIn {
