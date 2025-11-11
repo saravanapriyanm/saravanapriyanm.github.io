@@ -6,10 +6,6 @@
     <link rel="icon" type="image/png" href="../img/sp-logo.svg" />
     <link rel="stylesheet" href="../css/tetris.css" />
     <title>Projects - Saravanapriyan M</title>
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
-    ></script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
@@ -247,7 +243,7 @@
       }
     </style>
   </head>
-  <body x-data="projectsApp()">
+  <body>
     <div class="projects-container">
       <!-- Header -->
       <div class="header">
@@ -257,126 +253,136 @@
 
       <!-- Projects Grid -->
       <div class="projects-grid">
-        <template x-for="project in projects" :key="project.id">
-          <div class="project-card" @click="selectProject(project)">
-            <div class="project-header">
-              <span class="project-icon" x-text="project.icon"></span>
-              <h3 class="project-title" x-text="project.title"></h3>
-            </div>
-
-            <p class="project-description" x-text="project.description"></p>
-
-            <div class="tech-stack">
-              <template x-for="tech in project.technologies">
-                <span class="tech-tag" x-text="tech"></span>
-              </template>
-            </div>
-
-            <div class="project-status">
-              <span
-                class="status-indicator"
-                :class="'status-' + project.status"
-                x-text="project.statusText"
-              >
-              </span>
-              <a
-                :href="project.url"
-                class="visit-button"
-                target="_blank"
-                @click.stop
-              >
-                Visit
-              </a>
-            </div>
+        <!-- Project 1 -->
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-icon">🧠</span>
+            <h3 class="project-title">DATAMOCHA</h3>
           </div>
-        </template>
+
+          <p class="project-description">AI-driven data platform (App)</p>
+
+          <div class="tech-stack">
+            <span class="tech-tag">Web App</span>
+            <span class="tech-tag">External</span>
+          </div>
+
+          <div class="project-status">
+            <span class="status-indicator status-live">LIVE</span>
+            <a
+              href="https://www.datamocha.in/"
+              class="visit-button"
+              target="_blank"
+            >
+              Visit
+            </a>
+          </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-icon">🎁</span>
+            <h3 class="project-title">REWARD RALLY</h3>
+          </div>
+
+          <p class="project-description">
+            Rewards and engagement platform (App)
+          </p>
+
+          <div class="tech-stack">
+            <span class="tech-tag">Web App</span>
+            <span class="tech-tag">External</span>
+          </div>
+
+          <div class="project-status">
+            <span class="status-indicator status-live">LIVE</span>
+            <a
+              href="https://www.rewardrally.in/"
+              class="visit-button"
+              target="_blank"
+            >
+              Visit
+            </a>
+          </div>
+        </div>
+
+        <!-- Project 3 -->
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-icon">💬</span>
+            <h3 class="project-title">CHATDBEE</h3>
+          </div>
+
+          <p class="project-description">
+            Communication and chat experience (App)
+          </p>
+
+          <div class="tech-stack">
+            <span class="tech-tag">Web App</span>
+            <span class="tech-tag">External</span>
+          </div>
+
+          <div class="project-status">
+            <span class="status-indicator status-live">LIVE</span>
+            <a href="http://chatdbee.in/" class="visit-button" target="_blank">
+              Visit
+            </a>
+          </div>
+        </div>
+
+        <!-- Project 4 -->
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-icon">🏢</span>
+            <h3 class="project-title">MAXSPACE</h3>
+          </div>
+
+          <p class="project-description">Corporate website</p>
+
+          <div class="tech-stack">
+            <span class="tech-tag">Website</span>
+            <span class="tech-tag">External</span>
+          </div>
+
+          <div class="project-status">
+            <span class="status-indicator status-live">LIVE</span>
+            <a
+              href="https://www.maxspace.co.in/"
+              class="visit-button"
+              target="_blank"
+            >
+              Visit
+            </a>
+          </div>
+        </div>
+
+        <!-- Project 5 -->
+        <div class="project-card">
+          <div class="project-header">
+            <span class="project-icon">💰</span>
+            <h3 class="project-title">PRICEMESH - PRICE MONITOR</h3>
+          </div>
+
+          <p class="project-description">Price monitoring dashboard (App)</p>
+
+          <div class="tech-stack">
+            <span class="tech-tag">Web App</span>
+            <span class="tech-tag">External</span>
+          </div>
+
+          <div class="project-status">
+            <span class="status-indicator status-live">LIVE</span>
+            <a
+              href="https://pricemesh.tncmdashboard.com/#/price-monitor"
+              class="visit-button"
+              target="_blank"
+            >
+              Visit
+            </a>
+          </div>
+        </div>
       </div>
     </div>
-
-    <script>
-      function projectsApp() {
-        return {
-          currentFilter: "all",
-          allProjects: [
-            {
-              id: 1,
-              icon: "🧠",
-              title: "DATAMOCHA",
-              description: "AI-driven data platform (App)",
-              technologies: ["Web App", "External"],
-              status: "live",
-              statusText: "LIVE",
-              url: "https://www.datamocha.in/",
-            },
-            {
-              id: 2,
-              icon: "�",
-              title: "REWARD RALLY",
-              description: "Rewards and engagement platform (App)",
-              technologies: ["Web App", "External"],
-              status: "live",
-              statusText: "LIVE",
-              url: "https://www.rewardrally.in/",
-            },
-            {
-              id: 3,
-              icon: "�",
-              title: "CHATDBEE",
-              description: "Communication and chat experience (App)",
-              technologies: ["Web App", "External"],
-              status: "live",
-              statusText: "LIVE",
-              url: "http://chatdbee.in/",
-            },
-            {
-              id: 4,
-              icon: "�",
-              title: "MAXSPACE",
-              description: "Corporate website",
-              technologies: ["Website", "External"],
-              status: "live",
-              statusText: "LIVE",
-              url: "https://www.maxspace.co.in/",
-            },
-            {
-              id: 5,
-              icon: "�",
-              title: "PRICEMESH - PRICE MONITOR",
-              description: "Price monitoring dashboard (App)",
-              technologies: ["Web App", "External"],
-              status: "live",
-              statusText: "LIVE",
-              url: "https://pricemesh.tncmdashboard.com/#/price-monitor",
-            },
-          ],
-          projects: [],
-
-          init() {
-            this.projects = this.allProjects;
-          },
-
-          filterProjects(filter) {
-            this.currentFilter = filter;
-            if (filter === "all") {
-              this.projects = this.allProjects;
-            } else if (filter === "live") {
-              this.projects = this.allProjects.filter(
-                (p) => p.status === "live"
-              );
-            } else if (filter === "demo") {
-              this.projects = this.allProjects.filter(
-                (p) => p.status === "demo"
-              );
-            } else if (filter === "dev") {
-              this.projects = this.allProjects.filter(
-                (p) => p.status === "development"
-              );
-            }
-          },
-
-          selectProject(project) {},
-        };
-      }
-    </script>
   </body>
 </html>
