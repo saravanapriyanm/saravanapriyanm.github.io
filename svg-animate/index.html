@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SVG Animator</title>
+    <meta
+      name="description"
+      content="Upload SVG files and add animations to elements. Really simple, open source free tool for SVG animation."
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <script
       src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
@@ -20,22 +24,23 @@
       }
     </style>
   </head>
-  <body class="bg-gray-50 min-h-screen" x-data="svgAnimator()">
-    <div class="container mx-auto px-4 py-8">
+  <body class="bg-gray-50 h-screen" x-data="svgAnimator()">
+    <div class="container mx-auto px-4 py-4 h-full">
       <!-- Header -->
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">SVG Animator</h1>
-        <p class="text-gray-600">
-          Upload an SVG file, select elements, and add animations
-        </p>
+      <div class="text-center mb-4">
+        <h1 class="text-3xl font-semibold text-gray-800">
+          SVG Animator: Upload and animate SVG elements
+        </h1>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div
+        class="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:h-[calc(100vh-140px)]"
+      >
         <!-- Upload and Elements Panel -->
-        <div class="lg:col-span-1 space-y-6">
+        <div class="lg:col-span-1 space-y-4 overflow-y-auto pr-1">
           <!-- File Upload -->
-          <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Upload SVG</h2>
+          <div class="bg-white rounded-lg shadow-md p-4 text-sm">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">Upload SVG</h2>
             <div
               class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
               @click="$refs.fileInput.click()"
@@ -76,10 +81,10 @@
 
           <!-- SVG Elements List -->
           <div
-            class="bg-white rounded-lg shadow-md p-6"
+            class="bg-white rounded-lg shadow-md p-4 text-sm"
             x-show="svgElements.length > 0"
           >
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">
               SVG Elements
             </h2>
             <div class="space-y-2 max-h-64 overflow-y-auto">
@@ -103,63 +108,24 @@
               </template>
             </div>
           </div>
-
-          <!-- Element Details -->
-          <div
-            class="bg-white rounded-lg shadow-md p-6"
-            x-show="selectedElement"
-          >
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">
-              Element Details
-            </h2>
-            <div class="space-y-3" x-show="selectedElement">
-              <div>
-                <label class="block text-sm font-medium text-gray-700"
-                  >Tag Name</label
-                >
-                <div
-                  class="mt-1 p-2 bg-gray-50 rounded border"
-                  x-text="selectedElement?.tagName"
-                ></div>
-              </div>
-              <div x-show="selectedElement?.id">
-                <label class="block text-sm font-medium text-gray-700"
-                  >ID</label
-                >
-                <div
-                  class="mt-1 p-2 bg-gray-50 rounded border"
-                  x-text="selectedElement?.id"
-                ></div>
-              </div>
-              <div x-show="selectedElement?.getAttribute('class')">
-                <label class="block text-sm font-medium text-gray-700"
-                  >Class</label
-                >
-                <div
-                  class="mt-1 p-2 bg-gray-50 rounded border"
-                  x-text="selectedElement?.getAttribute('class')"
-                ></div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- SVG Preview Panel -->
-        <div class="lg:col-span-2">
-          <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-semibold text-gray-800">SVG Preview</h2>
+        <div class="lg:col-span-2 h-full flex flex-col">
+          <div class="bg-white rounded-lg shadow-md p-4 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-3 text-sm">
+              <h2 class="text-lg font-semibold text-gray-800">SVG Preview</h2>
               <button
                 @click="downloadSvg()"
                 x-show="svgContent"
-                class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+                class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors text-sm"
               >
                 Download SVG
               </button>
             </div>
 
             <div
-              class="border-2 border-gray-200 rounded-lg p-4 min-h-96 bg-gray-50"
+              class="border-2 border-gray-200 rounded-lg p-4 min-h-[260px] bg-gray-50"
               x-show="!svgContent"
             >
               <div class="flex items-center justify-center h-64 text-gray-500">
@@ -186,7 +152,7 @@
             </div>
 
             <div
-              class="border-2 border-gray-200 rounded-lg p-4 min-h-96 bg-white overflow-auto"
+              class="border-2 border-gray-200 rounded-lg p-3 flex-1 bg-white overflow-auto"
               x-show="svgContent"
               id="svgPreview"
               x-html="svgContent"
@@ -195,55 +161,25 @@
         </div>
 
         <!-- Animation Controls Panel -->
-        <div class="lg:col-span-1 space-y-6">
-          <!-- Element Details -->
-          <div
-            class="bg-white rounded-lg shadow-md p-6"
-            x-show="selectedElement"
-          >
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">
-              Selected Element
-            </h2>
-            <div class="space-y-3" x-show="selectedElement">
-              <div>
-                <label class="block text-sm font-medium text-gray-700"
-                  >Tag Name</label
-                >
-                <div
-                  class="mt-1 p-2 bg-gray-50 rounded border text-sm"
-                  x-text="selectedElement?.tagName"
-                ></div>
-              </div>
-              <div x-show="selectedElement?.id">
-                <label class="block text-sm font-medium text-gray-700"
-                  >ID</label
-                >
-                <div
-                  class="mt-1 p-2 bg-gray-50 rounded border text-sm"
-                  x-text="selectedElement?.id"
-                ></div>
-              </div>
-            </div>
-          </div>
-
+        <div class="lg:col-span-1 space-y-4 overflow-y-auto pr-1">
           <!-- Animation Controls -->
           <div
-            class="bg-white rounded-lg shadow-md p-6"
+            class="bg-white rounded-lg shadow-md p-4 text-sm"
             x-show="selectedElement"
           >
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">
               Animation Settings
             </h2>
-            <div class="space-y-4">
+            <div class="space-y-3">
               <!-- Animation Type -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2"
+                <label class="block text-xs font-medium text-gray-700 mb-2"
                   >Animation Type</label
                 >
                 <select
                   x-model="animationType"
                   @change="updateAnimationControls()"
-                  class="w-full p-2 border border-gray-300 rounded-md"
+                  class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                 >
                   <option value="rotate">Rotate</option>
                   <option value="scale">Scale</option>
@@ -255,7 +191,7 @@
 
               <!-- Animation-specific controls -->
               <div x-show="animationType === 'rotate'">
-                <label class="block text-sm font-medium text-gray-700 mb-2"
+                <label class="block text-xs font-medium text-gray-700 mb-2"
                   >Rotation (degrees)</label
                 >
                 <input
@@ -264,12 +200,12 @@
                   min="-360"
                   max="360"
                   step="10"
-                  class="w-full p-2 border border-gray-300 rounded-md"
+                  class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                 />
               </div>
 
               <div x-show="animationType === 'scale'">
-                <label class="block text-sm font-medium text-gray-700 mb-2"
+                <label class="block text-xs font-medium text-gray-700 mb-2"
                   >Scale Factor</label
                 >
                 <input
@@ -278,14 +214,14 @@
                   min="0.1"
                   max="3"
                   step="0.1"
-                  class="w-full p-2 border border-gray-300 rounded-md"
+                  class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                 />
               </div>
 
               <div x-show="animationType === 'translate'">
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                    <label class="block text-xs font-medium text-gray-700 mb-1"
                       >X Distance (px)</label
                     >
                     <input
@@ -294,11 +230,11 @@
                       min="-200"
                       max="200"
                       step="5"
-                      class="w-full p-2 border border-gray-300 rounded-md"
+                      class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                    <label class="block text-xs font-medium text-gray-700 mb-1"
                       >Y Distance (px)</label
                     >
                     <input
@@ -307,14 +243,14 @@
                       min="-200"
                       max="200"
                       step="5"
-                      class="w-full p-2 border border-gray-300 rounded-md"
+                      class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                     />
                   </div>
                 </div>
               </div>
 
               <div x-show="animationType === 'fade'">
-                <label class="block text-sm font-medium text-gray-700 mb-2"
+                <label class="block text-xs font-medium text-gray-700 mb-2"
                   >Minimum Opacity</label
                 >
                 <input
@@ -323,17 +259,17 @@
                   min="0"
                   max="1"
                   step="0.1"
-                  class="w-full p-2 border border-gray-300 rounded-md"
+                  class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                 />
               </div>
 
               <!-- Timing Controls -->
-              <div class="border-t pt-4">
-                <h3 class="text-sm font-medium text-gray-800 mb-3">Timing</h3>
+              <div class="border-t pt-3">
+                <h3 class="text-sm font-medium text-gray-800 mb-2">Timing</h3>
 
                 <!-- Duration -->
                 <div class="mb-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                  <label class="block text-xs font-medium text-gray-700 mb-2"
                     >Duration (seconds)</label
                   >
                   <input
@@ -342,13 +278,13 @@
                     min="0.1"
                     max="10"
                     step="0.1"
-                    class="w-full p-2 border border-gray-300 rounded-md"
+                    class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                   />
                 </div>
 
                 <!-- Delay -->
                 <div class="mb-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                  <label class="block text-xs font-medium text-gray-700 mb-2"
                     >Delay (seconds)</label
                   >
                   <input
@@ -357,18 +293,18 @@
                     min="0"
                     max="5"
                     step="0.1"
-                    class="w-full p-2 border border-gray-300 rounded-md"
+                    class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                   />
                 </div>
 
                 <!-- Easing -->
                 <div class="mb-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                  <label class="block text-xs font-medium text-gray-700 mb-2"
                     >Easing</label
                   >
                   <select
                     x-model="animationEasing"
-                    class="w-full p-2 border border-gray-300 rounded-md"
+                    class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                   >
                     <option value="linear">Linear</option>
                     <option value="ease">Ease</option>
@@ -383,12 +319,12 @@
 
                 <!-- Iteration Count -->
                 <div class="mb-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                  <label class="block text-xs font-medium text-gray-700 mb-2"
                     >Repeat</label
                   >
                   <select
                     x-model="animationIteration"
-                    class="w-full p-2 border border-gray-300 rounded-md"
+                    class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                   >
                     <option value="1">Once</option>
                     <option value="infinite">Infinite</option>
@@ -400,12 +336,12 @@
 
                 <!-- Animation Direction -->
                 <div class="mb-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                  <label class="block text-xs font-medium text-gray-700 mb-2"
                     >Direction</label
                   >
                   <select
                     x-model="animationDirection"
-                    class="w-full p-2 border border-gray-300 rounded-md"
+                    class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                   >
                     <option value="normal">Normal</option>
                     <option value="reverse">Reverse</option>
@@ -416,12 +352,12 @@
 
                 <!-- Animation Fill Mode -->
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                  <label class="block text-xs font-medium text-gray-700 mb-2"
                     >Fill Mode</label
                   >
                   <select
                     x-model="animationFillMode"
-                    class="w-full p-2 border border-gray-300 rounded-md"
+                    class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                   >
                     <option value="none">None (Reset)</option>
                     <option value="forwards">Forwards (Hold End)</option>
@@ -432,17 +368,17 @@
               </div>
 
               <!-- Action Buttons -->
-              <div class="border-t pt-4 space-y-2">
+              <div class="border-t pt-3 space-y-2">
                 <button
                   @click="applyAnimation()"
-                  class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                  class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm"
                 >
                   Apply Animation
                 </button>
 
                 <button
                   @click="removeAnimation()"
-                  class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors"
+                  class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors text-sm"
                 >
                   Remove Animation
                 </button>
@@ -697,6 +633,9 @@
             const animationCSS = `${animationName} ${this.animationDuration}s ${this.animationEasing} ${this.animationDelay}s ${this.animationIteration} ${this.animationDirection} ${this.animationFillMode}`;
             element.style.animation = animationCSS;
             element.style.transformOrigin = "center";
+
+            // Restart all running animations so preview stays in sync
+            this.restartAllAnimations();
           },
 
           removeAnimation() {
@@ -751,6 +690,18 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+          },
+
+          restartAllAnimations() {
+            requestAnimationFrame(() => {
+              this.svgElements.forEach((el) => {
+                if (!el.style.animation) return;
+                const current = el.style.animation;
+                el.style.animation = "none";
+                void el.offsetWidth; // force reflow
+                el.style.animation = current;
+              });
+            });
           },
         };
       }
