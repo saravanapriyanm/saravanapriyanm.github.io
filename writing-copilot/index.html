@@ -6,6 +6,7 @@
     <title>Writing Copilot - AI-Powered Markdown Editor</title>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
     <style>
       * {
         margin: 0;
@@ -410,6 +411,7 @@
               @keydown="handleKeyDown($event)"
               @mouseup="handleTextSelection($event)"
               class="editor-textarea"
+              aria-label="Markdown Editor"
               placeholder="Start writing in markdown...
 
 # Heading 1
@@ -434,7 +436,7 @@
         <!-- Preview Panel -->
         <div class="preview-panel">
           <div class="panel-header">Live Preview</div>
-          <div class="preview-content" x-html="preview"></div>
+          <div class="preview-content" x-html="DOMPurify.sanitize(preview)"></div>
         </div>
       </div>
 
@@ -463,11 +465,11 @@
       </div>
 
       <!-- Settings Modal -->
-      <div x-show="showSettings" class="modal-overlay">
-        <div class="modal" @click.away="showSettings = false">
+      <div x-show="showSettings" class="modal-overlay" @click.self="showSettings = false">
+        <div class="modal">
           <div class="modal-header">
             <h2>⚙️ AI Settings</h2>
-            <button @click="showSettings = false" class="modal-close">&times;</button>
+            <button @click="showSettings = false" class="modal-close" aria-label="Close">&times;</button>
           </div>
           <div class="modal-body">
             <div class="form-group">
@@ -675,9 +677,17 @@
               })
             });
 
+            if (!response.ok) {
+              throw new Error('API request failed');
+            }
+
             const data = await response.json();
-            const synonymsText = data.choices[0].message.content.trim();
-            this.synonyms = synonymsText.split(',').map(s => s.trim()).filter(s => s);
+            if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+              const synonymsText = data.choices[0].message.content.trim();
+              this.synonyms = synonymsText.split(',').map(s => s.trim()).filter(s => s);
+            } else {
+              throw new Error('Unexpected API response format');
+            }
           },
 
           async getSynonymsFromGemini(word) {
@@ -701,9 +711,17 @@
               })
             });
 
+            if (!response.ok) {
+              throw new Error('API request failed');
+            }
+
             const data = await response.json();
-            const synonymsText = data.candidates[0].content.parts[0].text.trim();
-            this.synonyms = synonymsText.split(',').map(s => s.trim()).filter(s => s);
+            if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+              const synonymsText = data.candidates[0].content.parts[0].text.trim();
+              this.synonyms = synonymsText.split(',').map(s => s.trim()).filter(s => s);
+            } else {
+              throw new Error('Unexpected API response format');
+            }
           },
 
           getFallbackSynonyms(word) {
@@ -806,8 +824,16 @@
               })
             });
 
+            if (!response.ok) {
+              throw new Error('API request failed');
+            }
+
             const data = await response.json();
-            return data.choices[0].message.content.trim();
+            if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+              return data.choices[0].message.content.trim();
+            } else {
+              throw new Error('Unexpected API response format');
+            }
           },
 
           async getAutofillFromGemini(context) {
@@ -831,8 +857,17 @@
               })
             });
 
+            if (!response.ok) {
+              throw new Error('API request failed');
+            }
+
             const data = await response.json();
-            return data.candidates[0].content.parts[0].text.trim();
+            if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+              return data.candidates[0].content.parts[0].text.trim();
+            } else {
+              throw new Error('Unexpected API response format');
+            }
+          },
           },
 
           acceptAutofill() {

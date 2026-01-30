@@ -1,6 +1,6 @@
 # Writing Copilot - AI-Powered Markdown Editor
 
-A WYSIWYG markdown editor with AI assistance for enhanced writing experience.
+A markdown editor with live preview and AI assistance for enhanced writing experience.
 
 ## Features
 
