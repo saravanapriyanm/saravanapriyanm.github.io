@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Writing Copilot - AI-Powered Markdown Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f5f5;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        background: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .header h1 {
+        font-size: 24px;
+        color: #2c3e50;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s;
+      }
+
+      .btn-primary {
+        background: #3498db;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2980b9;
+      }
+
+      .btn-secondary {
+        background: #95a5a6;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #7f8c8d;
+      }
+
+      .editor-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        height: calc(100vh - 180px);
+      }
+
+      .editor-panel,
+      .preview-panel {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel-header {
+        padding: 12px 20px;
+        background: #34495e;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .editor-content {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .editor-textarea {
+        width: 100%;
+        height: 100%;
+        border: none;
+        outline: none;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: none;
+      }
+
+      .preview-content {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        line-height: 1.6;
+      }
+
+      .preview-content h1,
+      .preview-content h2,
+      .preview-content h3,
+      .preview-content h4,
+      .preview-content h5,
+      .preview-content h6 {
+        margin-top: 24px;
+        margin-bottom: 16px;
+        font-weight: 600;
+      }
+
+      .preview-content h1 {
+        font-size: 2em;
+        border-bottom: 1px solid #eaecef;
+        padding-bottom: 0.3em;
+      }
+
+      .preview-content h2 {
+        font-size: 1.5em;
+        border-bottom: 1px solid #eaecef;
+        padding-bottom: 0.3em;
+      }
+
+      .preview-content p {
+        margin-bottom: 16px;
+      }
+
+      .preview-content code {
+        background: #f6f8fa;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+      }
+
+      .preview-content pre {
+        background: #f6f8fa;
+        padding: 16px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin-bottom: 16px;
+      }
+
+      .preview-content pre code {
+        background: none;
+        padding: 0;
+      }
+
+      .preview-content ul,
+      .preview-content ol {
+        margin-bottom: 16px;
+        padding-left: 2em;
+      }
+
+      .preview-content blockquote {
+        border-left: 4px solid #dfe2e5;
+        padding-left: 16px;
+        color: #6a737d;
+        margin-bottom: 16px;
+      }
+
+      /* Context Menu */
+      .context-menu {
+        position: fixed;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        padding: 8px 0;
+        z-index: 1000;
+        min-width: 200px;
+      }
+
+      .context-menu-item {
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+        font-size: 14px;
+      }
+
+      .context-menu-item:hover {
+        background: #f0f0f0;
+      }
+
+      .context-menu-divider {
+        height: 1px;
+        background: #e0e0e0;
+        margin: 4px 0;
+      }
+
+      /* Autofill Suggestion */
+      .autofill-suggestion {
+        position: absolute;
+        color: #999;
+        pointer-events: none;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        white-space: pre-wrap;
+        z-index: 10;
+      }
+
+      /* Modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+      }
+
+      .modal {
+        background: white;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header h2 {
+        font-size: 20px;
+        color: #2c3e50;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #999;
+        line-height: 1;
+      }
+
+      .modal-close:hover {
+        color: #333;
+      }
+
+      .modal-body {
+        padding: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #3498db;
+      }
+
+      .form-group small {
+        display: block;
+        margin-top: 4px;
+        color: #7f8c8d;
+        font-size: 12px;
+      }
+
+      .modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .status-indicator.connected {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-indicator.disconnected {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .ai-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        background: #e3f2fd;
+        color: #1976d2;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      @media (max-width: 768px) {
+        .editor-container {
+          grid-template-columns: 1fr;
+          height: auto;
+        }
+
+        .editor-panel,
+        .preview-panel {
+          height: 400px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div x-data="writingCopilot()" x-init="init()" class="container">
+      <!-- Header -->
+      <div class="header">
+        <div>
+          <h1>✍️ Writing Copilot</h1>
+          <div style="margin-top: 4px;">
+            <span x-show="aiConfigured" class="status-indicator connected">
+              <span class="status-dot"></span>
+              AI Enabled
+            </span>
+            <span x-show="!aiConfigured" class="status-indicator disconnected">
+              <span class="status-dot"></span>
+              AI Not Configured
+            </span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button @click="clearEditor()" class="btn btn-secondary">Clear</button>
+          <button @click="showSettings = true" class="btn btn-primary">⚙️ Settings</button>
+        </div>
+      </div>
+
+      <!-- Editor Container -->
+      <div class="editor-container">
+        <!-- Editor Panel -->
+        <div class="editor-panel">
+          <div class="panel-header">
+            Markdown Editor
+            <span x-show="aiConfigured" class="ai-badge">⚡ AI Powered</span>
+          </div>
+          <div class="editor-content" style="position: relative;">
+            <textarea
+              x-ref="editor"
+              x-model="markdown"
+              @input="updatePreview()"
+              @keydown="handleKeyDown($event)"
+              @mouseup="handleTextSelection($event)"
+              class="editor-textarea"
+              placeholder="Start writing in markdown...
+
+# Heading 1
+## Heading 2
+
+**Bold text** and *italic text*
+
+- List item 1
+- List item 2
+
+[Link](https://example.com)"
+            ></textarea>
+            <div
+              x-show="showAutofill"
+              x-text="autofillSuggestion"
+              class="autofill-suggestion"
+              :style="autofillPosition"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+          <div class="panel-header">Live Preview</div>
+          <div class="preview-content" x-html="preview"></div>
+        </div>
+      </div>
+
+      <!-- Context Menu for Synonyms -->
+      <div
+        x-show="showContextMenu"
+        @click.away="showContextMenu = false"
+        class="context-menu"
+        :style="contextMenuPosition"
+      >
+        <div class="context-menu-item" style="font-weight: 600; color: #666; cursor: default;">
+          Suggestions for "<span x-text="selectedWord"></span>"
+        </div>
+        <div class="context-menu-divider"></div>
+        <template x-for="synonym in synonyms" :key="synonym">
+          <div
+            @click="replaceSynonym(synonym)"
+            class="context-menu-item"
+            x-text="synonym"
+          ></div>
+        </template>
+        <div x-show="synonyms.length === 0" class="context-menu-item" style="color: #999;">
+          <span x-show="!aiConfigured">Configure AI for suggestions</span>
+          <span x-show="aiConfigured">Loading suggestions...</span>
+        </div>
+      </div>
+
+      <!-- Settings Modal -->
+      <div x-show="showSettings" class="modal-overlay">
+        <div class="modal" @click.away="showSettings = false">
+          <div class="modal-header">
+            <h2>⚙️ AI Settings</h2>
+            <button @click="showSettings = false" class="modal-close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>AI Provider</label>
+              <select x-model="settings.provider">
+                <option value="">Select Provider</option>
+                <option value="azure">Azure OpenAI</option>
+                <option value="gemini">Google Gemini</option>
+              </select>
+            </div>
+
+            <template x-if="settings.provider === 'azure'">
+              <div>
+                <div class="form-group">
+                  <label>Azure OpenAI Endpoint</label>
+                  <input
+                    type="text"
+                    x-model="settings.azureEndpoint"
+                    placeholder="https://your-resource.openai.azure.com/"
+                  />
+                  <small>Your Azure OpenAI resource endpoint</small>
+                </div>
+                <div class="form-group">
+                  <label>API Key</label>
+                  <input
+                    type="password"
+                    x-model="settings.azureApiKey"
+                    placeholder="Enter your Azure OpenAI API key"
+                  />
+                  <small>Found in Azure Portal under Keys and Endpoint</small>
+                </div>
+                <div class="form-group">
+                  <label>Deployment Name</label>
+                  <input
+                    type="text"
+                    x-model="settings.azureDeployment"
+                    placeholder="gpt-4"
+                  />
+                  <small>The name of your model deployment</small>
+                </div>
+              </div>
+            </template>
+
+            <template x-if="settings.provider === 'gemini'">
+              <div>
+                <div class="form-group">
+                  <label>Gemini API Key</label>
+                  <input
+                    type="password"
+                    x-model="settings.geminiApiKey"
+                    placeholder="Enter your Gemini API key"
+                  />
+                  <small>Get your API key from Google AI Studio</small>
+                </div>
+                <div class="form-group">
+                  <label>Model</label>
+                  <select x-model="settings.geminiModel">
+                    <option value="gemini-pro">Gemini Pro</option>
+                    <option value="gemini-pro-latest">Gemini Pro Latest</option>
+                  </select>
+                </div>
+              </div>
+            </template>
+
+            <div x-show="settings.provider" class="form-group">
+              <button @click="validateCredentials()" class="btn btn-primary" style="width: 100%;">
+                Validate & Save Configuration
+              </button>
+            </div>
+
+            <div x-show="validationMessage" :class="validationSuccess ? 'status-indicator connected' : 'status-indicator disconnected'" style="margin-top: 15px; width: 100%; justify-content: center;">
+              <span x-text="validationMessage"></span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button @click="clearSettings()" class="btn btn-secondary">Clear Settings</button>
+            <button @click="showSettings = false" class="btn btn-primary">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function writingCopilot() {
+        return {
+          markdown: '',
+          preview: '',
+          showContextMenu: false,
+          contextMenuPosition: {},
+          selectedWord: '',
+          selectedRange: null,
+          synonyms: [],
+          showAutofill: false,
+          autofillSuggestion: '',
+          autofillPosition: {},
+          showSettings: false,
+          aiConfigured: false,
+          settings: {
+            provider: '',
+            azureEndpoint: '',
+            azureApiKey: '',
+            azureDeployment: '',
+            geminiApiKey: '',
+            geminiModel: 'gemini-pro'
+          },
+          validationMessage: '',
+          validationSuccess: false,
+
+          init() {
+            // Load settings from localStorage
+            const savedSettings = localStorage.getItem('writingCopilotSettings');
+            if (savedSettings) {
+              this.settings = JSON.parse(savedSettings);
+              this.aiConfigured = true;
+            }
+
+            // Load saved markdown if exists
+            const savedMarkdown = localStorage.getItem('writingCopilotMarkdown');
+            if (savedMarkdown) {
+              this.markdown = savedMarkdown;
+              this.updatePreview();
+            }
+
+            // Auto-save markdown
+            setInterval(() => {
+              if (this.markdown) {
+                localStorage.setItem('writingCopilotMarkdown', this.markdown);
+              }
+            }, 5000);
+          },
+
+          updatePreview() {
+            this.preview = marked.parse(this.markdown);
+          },
+
+          handleTextSelection(event) {
+            setTimeout(() => {
+              const selection = window.getSelection();
+              const selectedText = selection.toString().trim();
+
+              if (selectedText && selectedText.split(/\s+/).length === 1) {
+                this.selectedWord = selectedText;
+                this.selectedRange = {
+                  start: this.$refs.editor.selectionStart,
+                  end: this.$refs.editor.selectionEnd
+                };
+
+                // Position context menu
+                const rect = event.target.getBoundingClientRect();
+                this.contextMenuPosition = {
+                  top: `${event.clientY}px`,
+                  left: `${event.clientX}px`
+                };
+
+                this.showContextMenu = true;
+                this.getSynonyms(selectedText);
+              } else {
+                this.showContextMenu = false;
+              }
+            }, 10);
+          },
+
+          async getSynonyms(word) {
+            this.synonyms = [];
+
+            if (!this.aiConfigured) {
+              return;
+            }
+
+            try {
+              if (this.settings.provider === 'azure') {
+                await this.getSynonymsFromAzure(word);
+              } else if (this.settings.provider === 'gemini') {
+                await this.getSynonymsFromGemini(word);
+              }
+            } catch (error) {
+              console.error('Error getting synonyms:', error);
+              // Fallback to simple synonyms
+              this.synonyms = this.getFallbackSynonyms(word);
+            }
+          },
+
+          async getSynonymsFromAzure(word) {
+            const url = `${this.settings.azureEndpoint}/openai/deployments/${this.settings.azureDeployment}/chat/completions?api-version=2024-02-15-preview`;
+            
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'api-key': this.settings.azureApiKey
+              },
+              body: JSON.stringify({
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'You are a helpful writing assistant. Provide 5 synonyms for the given word. Return only the synonyms as a comma-separated list, nothing else.'
+                  },
+                  {
+                    role: 'user',
+                    content: `Give me 5 synonyms for: ${word}`
+                  }
+                ],
+                max_tokens: 50,
+                temperature: 0.7
+              })
+            });
+
+            const data = await response.json();
+            const synonymsText = data.choices[0].message.content.trim();
+            this.synonyms = synonymsText.split(',').map(s => s.trim()).filter(s => s);
+          },
+
+          async getSynonymsFromGemini(word) {
+            const url = `https://generativelanguage.googleapis.com/v1/models/${this.settings.geminiModel}:generateContent?key=${this.settings.geminiApiKey}`;
+            
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{
+                    text: `Give me 5 synonyms for the word "${word}". Return only the synonyms as a comma-separated list, nothing else.`
+                  }]
+                }],
+                generationConfig: {
+                  temperature: 0.7,
+                  maxOutputTokens: 50
+                }
+              })
+            });
+
+            const data = await response.json();
+            const synonymsText = data.candidates[0].content.parts[0].text.trim();
+            this.synonyms = synonymsText.split(',').map(s => s.trim()).filter(s => s);
+          },
+
+          getFallbackSynonyms(word) {
+            // Simple fallback synonyms database
+            const synonymsDB = {
+              'good': ['great', 'excellent', 'fine', 'nice', 'wonderful'],
+              'bad': ['poor', 'terrible', 'awful', 'horrible', 'dreadful'],
+              'big': ['large', 'huge', 'enormous', 'massive', 'gigantic'],
+              'small': ['tiny', 'little', 'miniature', 'petite', 'compact'],
+              'happy': ['joyful', 'cheerful', 'delighted', 'pleased', 'content'],
+              'sad': ['unhappy', 'sorrowful', 'melancholy', 'gloomy', 'depressed'],
+              'fast': ['quick', 'rapid', 'swift', 'speedy', 'hasty'],
+              'slow': ['sluggish', 'leisurely', 'gradual', 'unhurried', 'deliberate'],
+              'smart': ['intelligent', 'clever', 'bright', 'brilliant', 'wise'],
+              'important': ['significant', 'crucial', 'vital', 'essential', 'critical']
+            };
+
+            return synonymsDB[word.toLowerCase()] || ['No suggestions available'];
+          },
+
+          replaceSynonym(synonym) {
+            if (this.selectedRange && synonym !== 'No suggestions available') {
+              const before = this.markdown.substring(0, this.selectedRange.start);
+              const after = this.markdown.substring(this.selectedRange.end);
+              this.markdown = before + synonym + after;
+              this.updatePreview();
+            }
+            this.showContextMenu = false;
+          },
+
+          async handleKeyDown(event) {
+            // Handle Tab key for autofill
+            if (event.key === 'Tab' && this.showAutofill) {
+              event.preventDefault();
+              this.acceptAutofill();
+              return;
+            }
+
+            // Handle Enter key for autofill suggestion
+            if (event.key === 'Enter' && this.aiConfigured) {
+              setTimeout(() => {
+                this.generateAutofill();
+              }, 100);
+            }
+          },
+
+          async generateAutofill() {
+            if (!this.aiConfigured) return;
+
+            const cursorPos = this.$refs.editor.selectionStart;
+            const textBeforeCursor = this.markdown.substring(0, cursorPos);
+            const lastLines = textBeforeCursor.split('\n').slice(-3).join('\n');
+
+            if (lastLines.trim().length < 10) return;
+
+            try {
+              let suggestion = '';
+              if (this.settings.provider === 'azure') {
+                suggestion = await this.getAutofillFromAzure(lastLines);
+              } else if (this.settings.provider === 'gemini') {
+                suggestion = await this.getAutofillFromGemini(lastLines);
+              }
+
+              if (suggestion) {
+                this.autofillSuggestion = suggestion;
+                this.showAutofill = true;
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                  this.showAutofill = false;
+                }, 10000);
+              }
+            } catch (error) {
+              console.error('Error generating autofill:', error);
+            }
+          },
+
+          async getAutofillFromAzure(context) {
+            const url = `${this.settings.azureEndpoint}/openai/deployments/${this.settings.azureDeployment}/chat/completions?api-version=2024-02-15-preview`;
+            
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'api-key': this.settings.azureApiKey
+              },
+              body: JSON.stringify({
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'You are a writing assistant. Continue the text naturally with one sentence. Return only the next sentence, nothing else.'
+                  },
+                  {
+                    role: 'user',
+                    content: `Continue this text with one sentence:\n\n${context}`
+                  }
+                ],
+                max_tokens: 50,
+                temperature: 0.8
+              })
+            });
+
+            const data = await response.json();
+            return data.choices[0].message.content.trim();
+          },
+
+          async getAutofillFromGemini(context) {
+            const url = `https://generativelanguage.googleapis.com/v1/models/${this.settings.geminiModel}:generateContent?key=${this.settings.geminiApiKey}`;
+            
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{
+                    text: `Continue this text with one natural sentence. Return only the next sentence:\n\n${context}`
+                  }]
+                }],
+                generationConfig: {
+                  temperature: 0.8,
+                  maxOutputTokens: 50
+                }
+              })
+            });
+
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text.trim();
+          },
+
+          acceptAutofill() {
+            if (this.autofillSuggestion) {
+              const cursorPos = this.$refs.editor.selectionStart;
+              const before = this.markdown.substring(0, cursorPos);
+              const after = this.markdown.substring(cursorPos);
+              this.markdown = before + this.autofillSuggestion + after;
+              this.updatePreview();
+              this.showAutofill = false;
+              this.autofillSuggestion = '';
+            }
+          },
+
+          async validateCredentials() {
+            this.validationMessage = 'Validating...';
+            this.validationSuccess = false;
+
+            try {
+              let isValid = false;
+
+              if (this.settings.provider === 'azure') {
+                isValid = await this.validateAzure();
+              } else if (this.settings.provider === 'gemini') {
+                isValid = await this.validateGemini();
+              }
+
+              if (isValid) {
+                this.validationMessage = '✓ Configuration validated and saved!';
+                this.validationSuccess = true;
+                localStorage.setItem('writingCopilotSettings', JSON.stringify(this.settings));
+                this.aiConfigured = true;
+                
+                setTimeout(() => {
+                  this.showSettings = false;
+                  this.validationMessage = '';
+                }, 2000);
+              } else {
+                this.validationMessage = '✗ Validation failed. Please check your credentials.';
+                this.validationSuccess = false;
+              }
+            } catch (error) {
+              console.error('Validation error:', error);
+              this.validationMessage = '✗ Error: ' + error.message;
+              this.validationSuccess = false;
+            }
+          },
+
+          async validateAzure() {
+            const url = `${this.settings.azureEndpoint}/openai/deployments/${this.settings.azureDeployment}/chat/completions?api-version=2024-02-15-preview`;
+            
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'api-key': this.settings.azureApiKey
+              },
+              body: JSON.stringify({
+                messages: [
+                  { role: 'user', content: 'Hello' }
+                ],
+                max_tokens: 5
+              })
+            });
+
+            return response.ok;
+          },
+
+          async validateGemini() {
+            const url = `https://generativelanguage.googleapis.com/v1/models/${this.settings.geminiModel}:generateContent?key=${this.settings.geminiApiKey}`;
+            
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{ text: 'Hello' }]
+                }]
+              })
+            });
+
+            return response.ok;
+          },
+
+          clearSettings() {
+            this.settings = {
+              provider: '',
+              azureEndpoint: '',
+              azureApiKey: '',
+              azureDeployment: '',
+              geminiApiKey: '',
+              geminiModel: 'gemini-pro'
+            };
+            localStorage.removeItem('writingCopilotSettings');
+            this.aiConfigured = false;
+            this.validationMessage = 'Settings cleared';
+            this.validationSuccess = false;
+          },
+
+          clearEditor() {
+            if (confirm('Are you sure you want to clear the editor?')) {
+              this.markdown = '';
+              this.preview = '';
+              localStorage.removeItem('writingCopilotMarkdown');
+            }
+          }
+        };
+      }
+    </script>
+  </body>
+</html>
