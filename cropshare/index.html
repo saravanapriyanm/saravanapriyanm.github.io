@@ -304,6 +304,9 @@
           containerW: 700,
           containerH: 500,
 
+          LS_CROP_W: 'cropshare_cropW',
+          LS_CROP_H: 'cropshare_cropH',
+
           /* ── Lifecycle ── */
           init() {
             // Detect shared image from URL hash
@@ -317,6 +320,16 @@
                 }
               } catch (_) {}
             }
+
+            // Restore saved crop size from localStorage
+            const rawW = localStorage.getItem(this.LS_CROP_W);
+            const rawH = localStorage.getItem(this.LS_CROP_H);
+            if (rawW !== null) { const v = parseInt(rawW, 10); if (v > 0) this.cropW = v; }
+            if (rawH !== null) { const v = parseInt(rawH, 10); if (v > 0) this.cropH = v; }
+
+            // Persist crop size changes to localStorage
+            this.$watch('cropW', v => localStorage.setItem(this.LS_CROP_W, v));
+            this.$watch('cropH', v => localStorage.setItem(this.LS_CROP_H, v));
 
             // Size the crop container to the viewport
             this.sizeContainer();
@@ -396,8 +409,11 @@
                   this.imgX = (this.containerW  - img.naturalWidth  * this.imgScale) / 2;
                   this.imgY = (this.containerH - img.naturalHeight * this.imgScale) / 2;
 
-                  this.cropW = Math.round(Math.min(400, this.containerW  * 0.8));
-                  this.cropH = Math.round(Math.min(300, this.containerH * 0.8));
+                  if (!localStorage.getItem(this.LS_CROP_W))
+                    this.cropW = Math.round(Math.min(400, this.containerW  * 0.8));
+                  if (!localStorage.getItem(this.LS_CROP_H))
+                    this.cropH = Math.round(Math.min(300, this.containerH * 0.8));
+                  this.clampCrop();
 
                   this.step = 'adjust';
                 };
@@ -428,9 +444,12 @@
                 this.imgX = (this.containerW  - img.naturalWidth  * this.imgScale) / 2;
                 this.imgY = (this.containerH - img.naturalHeight * this.imgScale) / 2;
 
-                // Default crop (~80 % of container)
-                this.cropW = Math.round(Math.min(400, this.containerW  * 0.8));
-                this.cropH = Math.round(Math.min(300, this.containerH * 0.8));
+                // Default crop (~80 % of container) only if no saved size
+                if (!localStorage.getItem(this.LS_CROP_W))
+                  this.cropW = Math.round(Math.min(400, this.containerW  * 0.8));
+                if (!localStorage.getItem(this.LS_CROP_H))
+                  this.cropH = Math.round(Math.min(300, this.containerH * 0.8));
+                this.clampCrop();
 
                 // Default to PNG if source is PNG to preserve transparency
                 if (file.type === 'image/png') this.format = 'image/png';
