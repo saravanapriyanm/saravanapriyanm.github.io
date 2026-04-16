@@ -394,8 +394,10 @@
           },
 
           clampCrop() {
-            this.cropW = Math.max(1, Math.min(Math.round(this.cropW || 1), this.containerW));
-            this.cropH = Math.max(1, Math.min(Math.round(this.cropH || 1), this.containerH));
+            const w    = Math.round(this.cropW) || 1;
+            const h    = Math.round(this.cropH) || 1;
+            this.cropW = Math.max(1, Math.min(w, this.containerW));
+            this.cropH = Math.max(1, Math.min(h, this.containerH));
           },
 
           get fileExt() {
@@ -428,13 +430,15 @@
             const encoded   = encodeURIComponent(this.croppedDataUrl);
             this.shareUrl   = `${location.origin}${location.pathname}#${encoded}`;
 
-            // Approximate decoded byte size
-            const bytes = Math.round(this.croppedDataUrl.length * 0.75);
-            const kb    = bytes / 1024;
+            // base64 string length → approx decoded byte size (4 chars ≈ 3 bytes)
+            const BASE64_DECODE_RATIO = 0.75;
+            const BYTES_PER_KB        = 1024;
+            const bytes = Math.round(this.croppedDataUrl.length * BASE64_DECODE_RATIO);
+            const kb    = bytes / BYTES_PER_KB;
             this.urlWarn = kb > 500;
-            this.urlSizeLabel = kb < 1024
+            this.urlSizeLabel = kb < BYTES_PER_KB
               ? `~${Math.round(kb)} KB`
-              : `~${(kb / 1024).toFixed(1)} MB${this.urlWarn ? ' — consider reducing quality or crop size' : ''}`;
+              : `~${(kb / BYTES_PER_KB).toFixed(1)} MB${this.urlWarn ? ' — consider reducing quality or crop size' : ''}`;
 
             this.copied = false;
             this.step   = 'share';
