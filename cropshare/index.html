@@ -304,8 +304,10 @@
           containerW: 700,
           containerH: 500,
 
-          LS_CROP_W: 'cropshare_cropW',
-          LS_CROP_H: 'cropshare_cropH',
+          LS_CROP_W:  'cropshare_cropW',
+          LS_CROP_H:  'cropshare_cropH',
+          LS_FORMAT:  'cropshare_format',
+          LS_QUALITY: 'cropshare_quality',
 
           /* ── Lifecycle ── */
           init() {
@@ -321,15 +323,21 @@
               } catch (_) {}
             }
 
-            // Restore saved crop size from localStorage
+            // Restore saved preferences from localStorage
             const rawW = localStorage.getItem(this.LS_CROP_W);
             const rawH = localStorage.getItem(this.LS_CROP_H);
             if (rawW !== null) { const v = parseInt(rawW, 10); if (v > 0) this.cropW = v; }
             if (rawH !== null) { const v = parseInt(rawH, 10); if (v > 0) this.cropH = v; }
+            const savedFormat = localStorage.getItem(this.LS_FORMAT);
+            if (savedFormat && ['image/jpeg', 'image/png', 'image/webp'].includes(savedFormat)) this.format = savedFormat;
+            const savedQuality = localStorage.getItem(this.LS_QUALITY);
+            if (savedQuality !== null) { const v = parseFloat(savedQuality); if (v >= 0.1 && v <= 1) this.quality = v; }
 
-            // Persist crop size changes to localStorage
-            this.$watch('cropW', v => localStorage.setItem(this.LS_CROP_W, v));
-            this.$watch('cropH', v => localStorage.setItem(this.LS_CROP_H, v));
+            // Persist preference changes to localStorage
+            this.$watch('cropW',   v => localStorage.setItem(this.LS_CROP_W, v));
+            this.$watch('cropH',   v => localStorage.setItem(this.LS_CROP_H, v));
+            this.$watch('format',  v => localStorage.setItem(this.LS_FORMAT, v));
+            this.$watch('quality', v => localStorage.setItem(this.LS_QUALITY, v));
 
             // Size the crop container to the viewport
             this.sizeContainer();
@@ -451,8 +459,8 @@
                   this.cropH = Math.round(Math.min(300, this.containerH * 0.8));
                 this.clampCrop();
 
-                // Default to PNG if source is PNG to preserve transparency
-                if (file.type === 'image/png') this.format = 'image/png';
+                // Default to PNG if source is PNG to preserve transparency (only if no saved preference)
+                if (file.type === 'image/png' && !localStorage.getItem(this.LS_FORMAT)) this.format = 'image/png';
 
                 this.step = 'adjust';
               };
