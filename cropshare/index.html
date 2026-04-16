@@ -154,6 +154,7 @@
               <div style="display:flex;gap:0.4rem;align-items:flex-end">
                 <button @click="resetPosition()" class="btn btn-secondary btn-sm">↺ Reset</button>
                 <button @click="step = 'upload'" class="btn btn-secondary btn-sm">← Back</button>
+                <button @click="downloadCrop()" class="btn btn-secondary">⬇ Download</button>
                 <button @click="generateUrl()" class="btn btn-primary">Generate URL →</button>
               </div>
             </div>
@@ -449,6 +450,30 @@
               this.copied = true;
               setTimeout(() => { this.copied = false; }, 2500);
             });
+          },
+
+          /* ── Download directly from adjust step ── */
+          downloadCrop() {
+            const canvas = document.createElement('canvas');
+            canvas.width  = this.cropW;
+            canvas.height = this.cropH;
+            const ctx = canvas.getContext('2d');
+
+            const cropLeft = (this.containerW  - this.cropW) / 2;
+            const cropTop  = (this.containerH - this.cropH) / 2;
+            const srcX     = (cropLeft - this.imgX) / this.imgScale;
+            const srcY     = (cropTop  - this.imgY) / this.imgScale;
+            const srcW     = this.cropW  / this.imgScale;
+            const srcH     = this.cropH / this.imgScale;
+
+            ctx.drawImage(this.imageEl, srcX, srcY, srcW, srcH, 0, 0, this.cropW, this.cropH);
+
+            const q = this.format === 'image/png' ? undefined : this.quality;
+            const dataUrl = canvas.toDataURL(this.format, q);
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `cropshare.${this.fileExt}`;
+            a.click();
           },
         };
       }
