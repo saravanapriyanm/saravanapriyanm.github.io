@@ -60,19 +60,31 @@
             @dragleave.prevent="dragOver = false"
             @drop.prevent="handleDrop($event)"
           >
-            <div class="upload-icon">🖼️</div>
-            <p class="upload-text">Drag &amp; drop your image here</p>
-            <p class="upload-or">or</p>
-            <label class="btn btn-primary" style="cursor:pointer">
-              Browse File
-              <input
-                type="file"
-                accept="image/*"
-                @change="handleFile($event)"
-                style="display:none"
-              />
-            </label>
-            <p class="upload-hint">Supports JPG, PNG, GIF, WebP and more</p>
+            <template x-if="loading">
+              <div class="upload-loading">
+                <div class="spinner"></div>
+                <p class="upload-text upload-text-loading">Loading image…</p>
+              </div>
+            </template>
+            <template x-if="!loading">
+              <div>
+                <div class="upload-icon">🖼️</div>
+                <p class="upload-text">Drag &amp; drop your image here</p>
+                <p class="upload-hint upload-hint-web">Works with local files <em>and</em> images dragged from web pages</p>
+                <p class="upload-or">or</p>
+                <label class="btn btn-primary" style="cursor:pointer">
+                  Browse File
+                  <input
+                    type="file"
+                    accept="image/*"
+                    @change="handleFile($event)"
+                    style="display:none"
+                  />
+                </label>
+                <p class="upload-hint">Supports JPG, PNG, GIF, WebP and more</p>
+              </div>
+            </template>
+            <p x-show="dropError" x-text="dropError" class="drop-error"></p>
           </div>
         </div>
 
@@ -80,6 +92,14 @@
              STEP 2 – ADJUST
         ──────────────────────────────────────────── -->
         <div x-show="step === 'adjust'" style="display:none">
+          <!-- Cross-origin warning -->
+          <div x-show="canvasTainted" class="cors-warning">
+            ⚠️ This image was loaded cross-origin. Cropping &amp; display work, but <strong>export (Generate URL / Download) is blocked by the browser</strong>.
+            To export, save the image to your device first and then upload it here.
+          </div>
+          <!-- Export error -->
+          <div x-show="dropError" x-text="dropError" class="drop-error drop-error-adjust"></div>
+
           <!-- Toolbar -->
           <div class="toolbar">
             <!-- Crop dimensions -->
@@ -275,6 +295,12 @@
           copied: false,
           sharedImage: null,
 
+          dropError: '',
+          canvasTainted: false,
+          loading: false,
+
+          mimeMap: { png: 'image/png', webp: 'image/webp', gif: 'image/gif', jpg: 'image/jpeg', jpeg: 'image/jpeg' },
+
           containerW: 700,
           containerH: 500,
 
@@ -312,11 +338,80 @@
 
           handleDrop(e) {
             this.dragOver = false;
+            this.dropError = '';
+
+            // 1. File drop (local / OS)
             const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) this.loadImage(file);
+            if (file && file.type.startsWith('image/')) {
+              this.loadImage(file);
+              return;
+            }
+
+            // 2. Web image drag — try URI list, embedded HTML src, then plain text
+            let url = (e.dataTransfer.getData('text/uri-list') || '').split('\n')[0].trim();
+            if (!url) {
+              const html = e.dataTransfer.getData('text/html') || '';
+              const m = html.match(/src=["']([^"']+)["']/i);
+              if (m) url = m[1];
+            }
+            if (!url) url = (e.dataTransfer.getData('text/plain') || '').trim();
+
+            if (url && /^https?:\/\//i.test(url)) {
+              this.loadImageFromUrl(url);
+            }
+          },
+
+          loadImageFromUrl(url) {
+            this.dropError = '';
+            this.canvasTainted = false;
+            this.loading = true;
+
+            fetch(url, { mode: 'cors' })
+              .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.blob();
+              })
+              .then(blob => {
+                this.loading = false;
+                const ext = url.split('?')[0].split('.').pop().toLowerCase();
+                const type = (blob.type && blob.type !== 'application/octet-stream')
+                  ? blob.type
+                  : (this.mimeMap[ext] || 'image/jpeg');
+                this.loadImage(new File([blob], 'dropped.' + (ext || 'jpg'), { type }));
+              })
+              .catch(() => {
+                // CORS blocked – load directly; canvas export will be tainted
+                const img = new Image();
+                img.onload = () => {
+                  this.loading = false;
+                  this.naturalW  = img.naturalWidth;
+                  this.naturalH  = img.naturalHeight;
+                  this.image     = url;
+                  this.imageEl   = img;
+                  this.canvasTainted = true;
+
+                  const sx = this.containerW / img.naturalWidth;
+                  const sy = this.containerH / img.naturalHeight;
+                  this.imgScale = Math.min(sx, sy, 1);
+                  this.imgX = (this.containerW  - img.naturalWidth  * this.imgScale) / 2;
+                  this.imgY = (this.containerH - img.naturalHeight * this.imgScale) / 2;
+
+                  this.cropW = Math.round(Math.min(400, this.containerW  * 0.8));
+                  this.cropH = Math.round(Math.min(300, this.containerH * 0.8));
+
+                  this.step = 'adjust';
+                };
+                img.onerror = () => {
+                  this.loading = false;
+                  this.dropError = 'Could not load the image – the website may block external requests. Try saving the image to your device first, then upload it here.';
+                };
+                img.src = url;
+              });
           },
 
           loadImage(file) {
+            this.dropError = '';
+            this.canvasTainted = false;
             const reader = new FileReader();
             reader.onload = (ev) => {
               const img = new Image();
@@ -426,7 +521,14 @@
             ctx.drawImage(this.imageEl, srcX, srcY, srcW, srcH, 0, 0, this.cropW, this.cropH);
 
             const q = this.format === 'image/png' ? undefined : this.quality;
-            this.croppedDataUrl = canvas.toDataURL(this.format, q);
+            let dataUrl;
+            try {
+              dataUrl = canvas.toDataURL(this.format, q);
+            } catch (_) {
+              this.dropError = 'Export blocked by the browser (cross-origin image). Save the image to your device first, then upload it here.';
+              return;
+            }
+            this.croppedDataUrl = dataUrl;
 
             const encoded   = encodeURIComponent(this.croppedDataUrl);
             this.shareUrl   = `${location.origin}${location.pathname}#${encoded}`;
@@ -469,7 +571,13 @@
             ctx.drawImage(this.imageEl, srcX, srcY, srcW, srcH, 0, 0, this.cropW, this.cropH);
 
             const q = this.format === 'image/png' ? undefined : this.quality;
-            const dataUrl = canvas.toDataURL(this.format, q);
+            let dataUrl;
+            try {
+              dataUrl = canvas.toDataURL(this.format, q);
+            } catch (_) {
+              this.dropError = 'Export blocked by the browser (cross-origin image). Save the image to your device first, then upload it here.';
+              return;
+            }
             const a = document.createElement('a');
             a.href = dataUrl;
             a.download = `cropshare.${this.fileExt}`;
