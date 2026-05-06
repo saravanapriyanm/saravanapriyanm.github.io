@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CropShare – Crop & Share Images via URL</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+  </head>
+  <body>
+    <div x-data="cropShare()" x-init="init()" x-cloak>
+
+      <!-- ══════════════════════════════════════════════
+           SHARED IMAGE VIEW  (opened from a share URL)
+      ══════════════════════════════════════════════ -->
+      <div x-show="sharedImage" class="shared-view">
+        <div class="shared-card">
+          <h1 class="logo">✂️ CropShare</h1>
+          <img :src="sharedImage" alt="Shared cropped image" class="shared-img" />
+          <div class="shared-actions">
+            <a
+              :href="sharedImage"
+              download="cropshare.jpg"
+              class="btn btn-primary"
+            >⬇ Download</a>
+            <a href="./index.html" class="btn btn-secondary">✂️ Crop your own</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════
+           MAIN APP  (hidden when viewing a shared URL)
+      ══════════════════════════════════════════════ -->
+      <div x-show="!sharedImage" class="app">
+        <header class="header">
+          <h1 class="logo">✂️ CropShare</h1>
+          <p class="subtitle">Upload · Crop · Share via URL</p>
+        </header>
+
+        <!-- ── Step indicators ── -->
+        <div style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:1.5rem;font-size:0.82rem">
+          <span :style="step==='upload' ? 'color:#6366f1;font-weight:700' : 'color:#6b7280'">① Upload</span>
+          <span style="color:#374151">›</span>
+          <span :style="step==='adjust' ? 'color:#6366f1;font-weight:700' : 'color:#6b7280'">② Adjust</span>
+          <span style="color:#374151">›</span>
+          <span :style="step==='share'  ? 'color:#6366f1;font-weight:700' : 'color:#6b7280'">③ Share</span>
+        </div>
+
+        <!-- ────────────────────────────────────────────
+             STEP 1 – UPLOAD
+        ──────────────────────────────────────────── -->
+        <div x-show="step === 'upload'" class="upload-section">
+          <div
+            class="upload-zone"
+            :class="{ active: dragOver }"
+            @dragover.prevent="dragOver = true"
+            @dragleave.prevent="dragOver = false"
+            @drop.prevent="handleDrop($event)"
+          >
+            <template x-if="loading">
+              <div class="upload-loading">
+                <div class="spinner"></div>
+                <p class="upload-text upload-text-loading">Loading image…</p>
+              </div>
+            </template>
+            <template x-if="!loading">
+              <div>
+                <div class="upload-icon">🖼️</div>
+                <p class="upload-text">Drag &amp; drop your image here</p>
+                <p class="upload-hint upload-hint-web">Works with local files <em>and</em> images dragged from web pages</p>
+                <p class="upload-or">or</p>
+                <label class="btn btn-primary" style="cursor:pointer">
+                  Browse File
+                  <input
+                    type="file"
+                    accept="image/*"
+                    @change="handleFile($event)"
+                    style="display:none"
+                  />
+                </label>
+                <p class="upload-hint">Supports JPG, PNG, GIF, WebP and more</p>
+              </div>
+            </template>
+            <p x-show="dropError" x-text="dropError" class="drop-error"></p>
+          </div>
+        </div>
+
+        <!-- ────────────────────────────────────────────
+             STEP 2 – ADJUST
+        ──────────────────────────────────────────── -->
+        <div x-show="step === 'adjust'" style="display:none">
+          <!-- Cross-origin warning -->
+          <div x-show="canvasTainted" class="cors-warning">
+            ⚠️ This image was loaded cross-origin. Cropping &amp; display work, but <strong>export (Generate URL / Download) is blocked by the browser</strong>.
+            To export, save the image to your device first and then upload it here.
+          </div>
+          <!-- Export error -->
+          <div x-show="dropError" x-text="dropError" class="drop-error drop-error-adjust"></div>
+
+          <!-- Toolbar -->
+          <div class="toolbar">
+            <!-- Crop dimensions -->
+            <div class="toolbar-group">
+              <label class="input-label">
+                Width (px)
+                <input
+                  type="number"
+                  x-model.number="cropW"
+                  min="1"
+                  :max="containerW"
+                  @input="clampCrop()"
+                  class="dim-input"
+                />
+              </label>
+              <span class="dim-sep">×</span>
+              <label class="input-label">
+                Height (px)
+                <input
+                  type="number"
+                  x-model.number="cropH"
+                  min="1"
+                  :max="containerH"
+                  @input="clampCrop()"
+                  class="dim-input"
+                />
+              </label>
+            </div>
+
+            <!-- Scale / zoom -->
+            <div class="toolbar-group" style="flex:1;min-width:180px">
+              <label class="input-label" style="width:100%">
+                Zoom
+                <div class="scale-row">
+                  <input
+                    type="range"
+                    x-model.number="imgScale"
+                    min="0.05"
+                    max="8"
+                    step="0.01"
+                    class="scale-slider"
+                  />
+                  <span x-text="Math.round(imgScale * 100) + '%'" class="scale-val"></span>
+                </div>
+              </label>
+            </div>
+
+            <!-- Format + actions -->
+            <div class="toolbar-group" style="flex-wrap:wrap;gap:0.4rem">
+              <label class="input-label">
+                Format
+                <select x-model="format" class="dim-input" style="width:auto;padding-right:0.3rem">
+                  <option value="image/jpeg">JPEG</option>
+                  <option value="image/png">PNG</option>
+                  <option value="image/webp">WebP</option>
+                </select>
+              </label>
+              <label class="input-label" x-show="format !== 'image/png'">
+                Quality
+                <div class="scale-row" style="min-width:100px">
+                  <input
+                    type="range"
+                    x-model.number="quality"
+                    min="0.1"
+                    max="1"
+                    step="0.05"
+                    class="scale-slider"
+                  />
+                  <span x-text="Math.round(quality * 100) + '%'" class="scale-val"></span>
+                </div>
+              </label>
+              <div style="display:flex;gap:0.4rem;align-items:flex-end">
+                <button @click="resetPosition()" class="btn btn-secondary btn-sm">↺ Reset</button>
+                <button @click="step = 'upload'" class="btn btn-secondary btn-sm">← Back</button>
+                <button @click="downloadCrop()" class="btn btn-secondary">⬇ Download</button>
+                <button @click="generateUrl()" class="btn btn-primary">Generate URL →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Crop area -->
+          <div
+            class="crop-container"
+            :style="`width:${containerW}px;height:${containerH}px`"
+            @mousedown="startDrag($event)"
+            @mousemove="onDrag($event)"
+            @mouseup="stopDrag()"
+            @mouseleave="stopDrag()"
+            @touchstart.prevent="startDrag($event)"
+            @touchmove.prevent="onDrag($event)"
+            @touchend="stopDrag()"
+            @wheel.prevent="onWheel($event)"
+            :class="{ grabbing: dragging }"
+          >
+            <!-- Image layer -->
+            <div
+              class="img-wrapper"
+              :style="`transform:translate(${imgX}px,${imgY}px) scale(${imgScale});transform-origin:0 0`"
+            >
+              <img :src="image" alt="" draggable="false" />
+            </div>
+
+            <!-- Crop box overlay (box-shadow darkens area outside) -->
+            <div
+              class="crop-box"
+              :style="`width:${cropW}px;height:${cropH}px`"
+            ></div>
+          </div>
+
+          <p class="hint">Drag to reposition image · Scroll / pinch to zoom · Adjust crop dimensions above</p>
+        </div>
+
+        <!-- ────────────────────────────────────────────
+             STEP 3 – SHARE
+        ──────────────────────────────────────────── -->
+        <div x-show="step === 'share'" class="share-section" style="display:none">
+          <div class="share-card">
+            <h2>✅ Your crop URL is ready!</h2>
+
+            <div class="preview-row">
+              <!-- Preview of the cropped image -->
+              <img
+                :src="croppedDataUrl"
+                alt="Cropped image"
+                class="share-preview"
+              />
+
+              <!-- URL + actions -->
+              <div class="url-block">
+                <label class="input-label">Share URL</label>
+                <textarea
+                  x-text="shareUrl"
+                  readonly
+                  class="url-textarea"
+                  @click="$el.select()"
+                ></textarea>
+
+                <div class="url-size" :class="urlWarn ? 'warn' : ''" x-text="urlSizeLabel"></div>
+
+                <button
+                  @click="copyUrl()"
+                  class="btn btn-primary"
+                  style="width:100%"
+                >
+                  <span x-text="copied ? '✓ Copied!' : '📋 Copy URL'"></span>
+                </button>
+
+                <a
+                  :href="croppedDataUrl"
+                  :download="'cropshare.' + fileExt"
+                  class="btn btn-secondary"
+                  style="width:100%;text-align:center;margin-top:0.1rem"
+                >⬇ Download Image</a>
+              </div>
+            </div>
+
+            <button @click="step = 'adjust'" class="btn btn-secondary">← Back to Adjust</button>
+          </div>
+        </div>
+      </div><!-- /.app -->
+    </div><!-- /x-data -->
+
+    <script>
+      function cropShare() {
+        return {
+          /* ── State ── */
+          step: 'upload',
+          image: null,
+          imageEl: null,
+          naturalW: 0,
+          naturalH: 0,
+
+          cropW: 400,
+          cropH: 300,
+          format: 'image/jpeg',
+          quality: 0.85,
+
+          imgX: 0,
+          imgY: 0,
+          imgScale: 1,
+
+          dragging: false,
+          dragStartX: 0,
+          dragStartY: 0,
+          dragImgX: 0,
+          dragImgY: 0,
+          dragOver: false,
+
+          shareUrl: '',
+          croppedDataUrl: '',
+          urlSizeLabel: '',
+          urlWarn: false,
+          copied: false,
+          sharedImage: null,
+
+          dropError: '',
+          canvasTainted: false,
+          loading: false,
+
+          mimeMap: { png: 'image/png', webp: 'image/webp', gif: 'image/gif', jpg: 'image/jpeg', jpeg: 'image/jpeg' },
+
+          containerW: 700,
+          containerH: 500,
+
+          LS_CROP_W: 'cropshare_cropW',
+          LS_CROP_H: 'cropshare_cropH',
+
+          /* ── Lifecycle ── */
+          init() {
+            // Detect shared image from URL hash
+            const raw = location.hash.slice(1);
+            if (raw) {
+              try {
+                const decoded = decodeURIComponent(raw);
+                if (decoded.startsWith('data:image')) {
+                  this.sharedImage = decoded;
+                  return;
+                }
+              } catch (_) {}
+            }
+
+            // Restore saved crop size from localStorage
+            const rawW = localStorage.getItem(this.LS_CROP_W);
+            const rawH = localStorage.getItem(this.LS_CROP_H);
+            if (rawW !== null) { const v = parseInt(rawW, 10); if (v > 0) this.cropW = v; }
+            if (rawH !== null) { const v = parseInt(rawH, 10); if (v > 0) this.cropH = v; }
+
+            // Persist crop size changes to localStorage
+            this.$watch('cropW', v => localStorage.setItem(this.LS_CROP_W, v));
+            this.$watch('cropH', v => localStorage.setItem(this.LS_CROP_H, v));
+
+            // Size the crop container to the viewport
+            this.sizeContainer();
+            window.addEventListener('resize', () => this.sizeContainer());
+          },
+
+          sizeContainer() {
+            this.containerW = Math.max(280, Math.min(700, window.innerWidth - 32));
+            this.containerH = Math.max(220, Math.min(500, window.innerHeight - 270));
+            // Re-clamp crop box to new container
+            this.clampCrop();
+          },
+
+          /* ── Upload ── */
+          handleFile(e) {
+            const file = e.target.files[0];
+            if (file) this.loadImage(file);
+          },
+
+          handleDrop(e) {
+            this.dragOver = false;
+            this.dropError = '';
+
+            // 1. File drop (local / OS)
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+              this.loadImage(file);
+              return;
+            }
+
+            // 2. Web image drag — try URI list, embedded HTML src, then plain text
+            let url = (e.dataTransfer.getData('text/uri-list') || '').split('\n')[0].trim();
+            if (!url) {
+              const html = e.dataTransfer.getData('text/html') || '';
+              const m = html.match(/src=["']([^"']+)["']/i);
+              if (m) url = m[1];
+            }
+            if (!url) url = (e.dataTransfer.getData('text/plain') || '').trim();
+
+            if (url && /^https?:\/\//i.test(url)) {
+              this.loadImageFromUrl(url);
+            }
+          },
+
+          loadImageFromUrl(url) {
+            this.dropError = '';
+            this.canvasTainted = false;
+            this.loading = true;
+
+            fetch(url, { mode: 'cors' })
+              .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.blob();
+              })
+              .then(blob => {
+                this.loading = false;
+                const ext = url.split('?')[0].split('.').pop().toLowerCase();
+                const type = (blob.type && blob.type !== 'application/octet-stream')
+                  ? blob.type
+                  : (this.mimeMap[ext] || 'image/jpeg');
+                this.loadImage(new File([blob], 'dropped.' + (ext || 'jpg'), { type }));
+              })
+              .catch(() => {
+                // CORS blocked – load directly; canvas export will be tainted
+                const img = new Image();
+                img.onload = () => {
+                  this.loading = false;
+                  this.naturalW  = img.naturalWidth;
+                  this.naturalH  = img.naturalHeight;
+                  this.image     = url;
+                  this.imageEl   = img;
+                  this.canvasTainted = true;
+
+                  const sx = this.containerW / img.naturalWidth;
+                  const sy = this.containerH / img.naturalHeight;
+                  this.imgScale = Math.min(sx, sy, 1);
+                  this.imgX = (this.containerW  - img.naturalWidth  * this.imgScale) / 2;
+                  this.imgY = (this.containerH - img.naturalHeight * this.imgScale) / 2;
+
+                  if (!localStorage.getItem(this.LS_CROP_W))
+                    this.cropW = Math.round(Math.min(400, this.containerW  * 0.8));
+                  if (!localStorage.getItem(this.LS_CROP_H))
+                    this.cropH = Math.round(Math.min(300, this.containerH * 0.8));
+                  this.clampCrop();
+
+                  this.step = 'adjust';
+                };
+                img.onerror = () => {
+                  this.loading = false;
+                  this.dropError = 'Could not load the image – the website may block external requests. Try saving the image to your device first, then upload it here.';
+                };
+                img.src = url;
+              });
+          },
+
+          loadImage(file) {
+            this.dropError = '';
+            this.canvasTainted = false;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              const img = new Image();
+              img.onload = () => {
+                this.naturalW  = img.naturalWidth;
+                this.naturalH  = img.naturalHeight;
+                this.image     = ev.target.result;
+                this.imageEl   = img;
+
+                // Fit image inside the container
+                const sx = this.containerW / img.naturalWidth;
+                const sy = this.containerH / img.naturalHeight;
+                this.imgScale  = Math.min(sx, sy, 1);
+                this.imgX = (this.containerW  - img.naturalWidth  * this.imgScale) / 2;
+                this.imgY = (this.containerH - img.naturalHeight * this.imgScale) / 2;
+
+                // Default crop (~80 % of container) only if no saved size
+                if (!localStorage.getItem(this.LS_CROP_W))
+                  this.cropW = Math.round(Math.min(400, this.containerW  * 0.8));
+                if (!localStorage.getItem(this.LS_CROP_H))
+                  this.cropH = Math.round(Math.min(300, this.containerH * 0.8));
+                this.clampCrop();
+
+                // Default to PNG if source is PNG to preserve transparency
+                if (file.type === 'image/png') this.format = 'image/png';
+
+                this.step = 'adjust';
+              };
+              img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+          },
+
+          /* ── Drag to reposition ── */
+          startDrag(e) {
+            this.dragging  = true;
+            const p        = this.eventPos(e);
+            this.dragStartX = p.x;
+            this.dragStartY = p.y;
+            this.dragImgX  = this.imgX;
+            this.dragImgY  = this.imgY;
+          },
+
+          onDrag(e) {
+            if (!this.dragging) return;
+            const p    = this.eventPos(e);
+            this.imgX  = this.dragImgX + (p.x - this.dragStartX);
+            this.imgY  = this.dragImgY + (p.y - this.dragStartY);
+          },
+
+          stopDrag() { this.dragging = false; },
+
+          eventPos(e) {
+            if (e.touches && e.touches.length > 0)
+              return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            return { x: e.clientX, y: e.clientY };
+          },
+
+          /* ── Scroll / pinch to zoom ── */
+          onWheel(e) {
+            const factor = e.deltaY < 0 ? 1.1 : 0.9;
+            const rect   = e.currentTarget.getBoundingClientRect();
+            const mx     = e.clientX - rect.left;
+            const my     = e.clientY - rect.top;
+            const ns     = Math.max(0.05, Math.min(8, this.imgScale * factor));
+            const sf     = ns / this.imgScale;
+            this.imgX    = mx - (mx - this.imgX) * sf;
+            this.imgY    = my - (my - this.imgY) * sf;
+            this.imgScale = ns;
+          },
+
+          /* ── Helpers ── */
+          resetPosition() {
+            const sx = this.containerW  / this.naturalW;
+            const sy = this.containerH / this.naturalH;
+            this.imgScale = Math.min(sx, sy, 1);
+            this.imgX = (this.containerW  - this.naturalW  * this.imgScale) / 2;
+            this.imgY = (this.containerH - this.naturalH * this.imgScale) / 2;
+          },
+
+          clampCrop() {
+            const w    = Math.round(this.cropW) || 1;
+            const h    = Math.round(this.cropH) || 1;
+            this.cropW = Math.max(1, Math.min(w, this.containerW));
+            this.cropH = Math.max(1, Math.min(h, this.containerH));
+          },
+
+          get fileExt() {
+            return this.format === 'image/png'  ? 'png'
+                 : this.format === 'image/webp' ? 'webp'
+                 : 'jpg';
+          },
+
+          /* ── Generate URL ── */
+          generateUrl() {
+            const canvas = document.createElement('canvas');
+            canvas.width  = this.cropW;
+            canvas.height = this.cropH;
+            const ctx = canvas.getContext('2d');
+
+            // The crop box is centred in the container.
+            // Back-project from container-space to image-natural-space.
+            const cropLeft = (this.containerW  - this.cropW) / 2;
+            const cropTop  = (this.containerH - this.cropH) / 2;
+            const srcX     = (cropLeft - this.imgX) / this.imgScale;
+            const srcY     = (cropTop  - this.imgY) / this.imgScale;
+            const srcW     = this.cropW  / this.imgScale;
+            const srcH     = this.cropH / this.imgScale;
+
+            ctx.drawImage(this.imageEl, srcX, srcY, srcW, srcH, 0, 0, this.cropW, this.cropH);
+
+            const q = this.format === 'image/png' ? undefined : this.quality;
+            let dataUrl;
+            try {
+              dataUrl = canvas.toDataURL(this.format, q);
+            } catch (_) {
+              this.dropError = 'Export blocked by the browser (cross-origin image). Save the image to your device first, then upload it here.';
+              return;
+            }
+            this.croppedDataUrl = dataUrl;
+
+            const encoded   = encodeURIComponent(this.croppedDataUrl);
+            this.shareUrl   = `${location.origin}${location.pathname}#${encoded}`;
+
+            // base64 string length → approx decoded byte size (4 chars ≈ 3 bytes)
+            const BASE64_DECODE_RATIO = 0.75;
+            const BYTES_PER_KB        = 1024;
+            const bytes = Math.round(this.croppedDataUrl.length * BASE64_DECODE_RATIO);
+            const kb    = bytes / BYTES_PER_KB;
+            this.urlWarn = kb > 500;
+            this.urlSizeLabel = kb < BYTES_PER_KB
+              ? `~${Math.round(kb)} KB`
+              : `~${(kb / BYTES_PER_KB).toFixed(1)} MB${this.urlWarn ? ' — consider reducing quality or crop size' : ''}`;
+
+            this.copied = false;
+            this.step   = 'share';
+          },
+
+          copyUrl() {
+            navigator.clipboard.writeText(this.shareUrl).then(() => {
+              this.copied = true;
+              setTimeout(() => { this.copied = false; }, 2500);
+            });
+          },
+
+          /* ── Download directly from adjust step ── */
+          downloadCrop() {
+            const canvas = document.createElement('canvas');
+            canvas.width  = this.cropW;
+            canvas.height = this.cropH;
+            const ctx = canvas.getContext('2d');
+
+            const cropLeft = (this.containerW  - this.cropW) / 2;
+            const cropTop  = (this.containerH - this.cropH) / 2;
+            const srcX     = (cropLeft - this.imgX) / this.imgScale;
+            const srcY     = (cropTop  - this.imgY) / this.imgScale;
+            const srcW     = this.cropW  / this.imgScale;
+            const srcH     = this.cropH / this.imgScale;
+
+            ctx.drawImage(this.imageEl, srcX, srcY, srcW, srcH, 0, 0, this.cropW, this.cropH);
+
+            const q = this.format === 'image/png' ? undefined : this.quality;
+            let dataUrl;
+            try {
+              dataUrl = canvas.toDataURL(this.format, q);
+            } catch (_) {
+              this.dropError = 'Export blocked by the browser (cross-origin image). Save the image to your device first, then upload it here.';
+              return;
+            }
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `cropshare.${this.fileExt}`;
+            a.click();
+          },
+        };
+      }
+    </script>
+  </body>
+</html>
