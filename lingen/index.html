@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LinkedIn Carousel Generator</title>
+<link rel="stylesheet" href="styles.css"/>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<!-- Alpine.js -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<!-- html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="app" x-data="carousel()">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <span class="logo-icon">🎠</span>
+    <h1>LinkedIn Carousel Generator</h1>
+    <div class="export-btns">
+      <button class="btn btn-secondary btn-sm" @click="exportImages()"><i class="fa fa-image"></i> PNG</button>
+      <button class="btn btn-primary btn-sm" @click="exportPDF()"><i class="fa fa-file-pdf"></i> PDF</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn" :class="{active: tab==='slide'}" @click="tab='slide'"><i class="fa fa-layer-group"></i> Slide</button>
+        <button class="tab-btn" :class="{active: tab==='add'}" @click="tab='add'"><i class="fa fa-plus"></i> Add</button>
+        <button class="tab-btn" :class="{active: tab==='props'}" @click="tab='props'; openProps()"><i class="fa fa-sliders"></i> Props</button>
+      </div>
+
+      <!-- Slide Settings -->
+      <div x-show="tab==='slide'">
+        <div class="panel-section">
+          <h3><i class="fa fa-image"></i> Background</h3>
+          <div class="form-group">
+            <label>Color</label>
+            <input type="color" :value="currentSlide().bgColor" @input="currentSlide().bgColor = $event.target.value"/>
+          </div>
+          <div class="form-group">
+            <label>Image URL</label>
+            <input type="url" placeholder="https://..." x-model="currentSlide().bgImage"/>
+          </div>
+          <div class="form-group">
+            <label>Overlay Color</label>
+            <input type="color" :value="currentSlide().overlayColor" @input="currentSlide().overlayColor = $event.target.value"/>
+          </div>
+          <div class="form-group">
+            <label>Overlay Opacity: <span x-text="currentSlide().overlayOpacity"></span></label>
+            <input type="range" min="0" max="1" step="0.05" x-model="currentSlide().overlayOpacity"/>
+          </div>
+        </div>
+        <div class="panel-section">
+          <h3><i class="fa fa-copy"></i> Slides</h3>
+          <div class="form-row">
+            <button class="btn btn-secondary btn-sm" @click="duplicateSlide()"><i class="fa fa-clone"></i> Duplicate</button>
+            <button class="btn btn-danger btn-sm" @click="deleteSlide()" x-show="slides.length > 1"><i class="fa fa-trash"></i> Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Elements -->
+      <div x-show="tab==='add'">
+        <div class="panel-section">
+          <h3><i class="fa fa-font"></i> Text</h3>
+          <div class="form-group">
+            <textarea x-model="newText" placeholder="Type your text..." rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div>
+              <label>Color</label>
+              <input type="color" :value="newTextColor" @input="newTextColor = $event.target.value"/>
+            </div>
+            <div>
+              <label>Size (px)</label>
+              <input type="number" x-model="newTextSize" min="12" max="300" style="width:100%"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Font Weight</label>
+            <select x-model="newTextWeight">
+              <option value="400">Normal</option>
+              <option value="600">Semi Bold</option>
+              <option value="700">Bold</option>
+              <option value="800">Extra Bold</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Font Family</label>
+            <select x-model="newTextFont">
+              <option value="Inter, sans-serif">Inter</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="'Courier New', monospace">Courier New</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="'Times New Roman', serif">Times New Roman</option>
+              <option value="Impact, sans-serif">Impact</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%" @click="addText()"><i class="fa fa-plus"></i> Add Text</button>
+        </div>
+
+        <div class="panel-section">
+          <h3><i class="fa fa-icons"></i> Icons</h3>
+          <input class="icon-search" type="text" placeholder="Search icons..." x-model="iconSearch"/>
+          <div class="icon-grid">
+            <template x-for="icon in filteredIcons()" :key="icon.name">
+              <div class="icon-item" :title="icon.label" @click="addIcon(icon.name)">
+                <i :class="icon.class"></i>
+              </div>
+            </template>
+          </div>
+          <div class="form-row" style="margin-top:8px">
+            <div>
+              <label>Icon Color</label>
+              <input type="color" :value="newIconColor" @input="newIconColor = $event.target.value"/>
+            </div>
+            <div>
+              <label>Icon Size (px)</label>
+              <input type="number" x-model="newIconSize" min="16" max="300"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3><i class="fa fa-image"></i> Image</h3>
+          <div class="form-group">
+            <label>Image URL</label>
+            <input type="url" placeholder="https://..." x-model="newImageUrl"/>
+          </div>
+          <button class="btn btn-primary" style="width:100%;margin-bottom:6px" @click="addImageFromUrl()"><i class="fa fa-link"></i> Add from URL</button>
+          <div class="form-group">
+            <label>Upload Image</label>
+            <input type="file" accept="image/*" @change="addImageFromFile($event)" style="background:var(--surface2);border:1px solid var(--border);padding:5px;border-radius:6px;width:100%;color:var(--text);font-size:0.78rem"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Properties Panel -->
+      <div x-show="tab==='props'">
+        <template x-if="selectedEl">
+          <div>
+            <div class="props-panel">
+              <h4><i class="fa fa-sliders"></i> Element Properties</h4>
+
+              <!-- Position -->
+              <div class="form-group">
+                <label>Position</label>
+                <div class="form-row">
+                  <div><label>X (px)</label><input type="number" :value="Math.round(selectedEl.x)" @input="selectedEl.x=+$event.target.value"/></div>
+                  <div><label>Y (px)</label><input type="number" :value="Math.round(selectedEl.y)" @input="selectedEl.y=+$event.target.value"/></div>
+                </div>
+              </div>
+
+              <!-- Size -->
+              <div class="form-group" x-show="selectedEl.type !== 'text'">
+                <label>Size</label>
+                <div class="form-row">
+                  <div><label>W (px)</label><input type="number" :value="selectedEl.w" @input="selectedEl.w=+$event.target.value" min="10"/></div>
+                  <div><label>H (px)</label><input type="number" :value="selectedEl.h" @input="selectedEl.h=+$event.target.value" min="10"/></div>
+                </div>
+              </div>
+
+              <!-- Rotation -->
+              <div class="form-group">
+                <label>Rotation: <span x-text="(selectedEl.rotate||0) + '°'"></span></label>
+                <input type="range" min="-180" max="180" x-model="selectedEl.rotate"/>
+              </div>
+
+              <!-- Opacity -->
+              <div class="form-group">
+                <label>Opacity: <span x-text="selectedEl.opacity ?? 1"></span></label>
+                <input type="range" min="0" max="1" step="0.05" x-model="selectedEl.opacity"/>
+              </div>
+
+              <!-- Text props -->
+              <template x-if="selectedEl.type === 'text'">
+                <div>
+                  <div class="form-group">
+                    <label>Text Content</label>
+                    <textarea x-model="selectedEl.text" rows="3"></textarea>
+                  </div>
+                  <div class="form-row">
+                    <div>
+                      <label>Color</label>
+                      <input type="color" :value="selectedEl.color" @input="selectedEl.color=$event.target.value"/>
+                    </div>
+                    <div>
+                      <label>Size (px)</label>
+                      <input type="number" x-model="selectedEl.size" min="12" max="300"/>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Font Weight</label>
+                    <select x-model="selectedEl.weight">
+                      <option value="400">Normal</option>
+                      <option value="600">Semi Bold</option>
+                      <option value="700">Bold</option>
+                      <option value="800">Extra Bold</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Font Family</label>
+                    <select x-model="selectedEl.font">
+                      <option value="Inter, sans-serif">Inter</option>
+                      <option value="Georgia, serif">Georgia</option>
+                      <option value="'Courier New', monospace">Courier New</option>
+                      <option value="Arial, sans-serif">Arial</option>
+                      <option value="'Times New Roman', serif">Times New Roman</option>
+                      <option value="Impact, sans-serif">Impact</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Text Align</label>
+                    <select x-model="selectedEl.align">
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Line Height</label>
+                    <input type="number" x-model="selectedEl.lineHeight" min="1" max="3" step="0.1"/>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Icon props -->
+              <template x-if="selectedEl.type === 'icon'">
+                <div>
+                  <div class="form-row">
+                    <div>
+                      <label>Color</label>
+                      <input type="color" :value="selectedEl.color" @input="selectedEl.color=$event.target.value"/>
+                    </div>
+                    <div>
+                      <label>Size (px)</label>
+                      <input type="number" x-model="selectedEl.size" min="16" max="300"/>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Image props -->
+              <template x-if="selectedEl.type === 'image'">
+                <div>
+                  <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="url" x-model="selectedEl.src"/>
+                  </div>
+                  <div class="form-group">
+                    <label>Object Fit</label>
+                    <select x-model="selectedEl.fit">
+                      <option value="contain">Contain</option>
+                      <option value="cover">Cover</option>
+                      <option value="fill">Fill</option>
+                      <option value="none">None</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Border Radius (px)</label>
+                    <input type="number" x-model="selectedEl.borderRadius" min="0" max="500"/>
+                  </div>
+                </div>
+              </template>
+
+              <button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px" @click="deleteSelected()">
+                <i class="fa fa-trash"></i> Delete Element
+              </button>
+            </div>
+          </div>
+        </template>
+        <template x-if="!selectedEl">
+          <div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:0.82rem">
+            <i class="fa fa-mouse-pointer" style="font-size:2rem;display:block;margin-bottom:8px"></i>
+            Click an element on the slide to edit its properties
+          </div>
+        </template>
+      </div>
+
+    </div>
+
+    <!-- Canvas Area -->
+    <div class="canvas-area" @click.self="selectedEl=null">
+
+      <!-- Slide -->
+      <div class="slide-wrapper" id="slide-wrapper" @click.self="selectedEl=null">
+        <div class="slide-canvas" :id="'slide-'+currentIdx" :style="slideCanvasStyle()">
+          <!-- Background -->
+          <div class="slide-bg" :style="slideBgStyle()"></div>
+          <!-- Overlay -->
+          <div class="slide-bg-overlay" :style="overlayStyle()"></div>
+
+          <!-- Elements -->
+          <template x-for="(el, i) in currentSlide().elements" :key="el.id">
+            <div
+              class="slide-element"
+              :class="{selected: selectedEl && selectedEl.id === el.id}"
+              :style="elementWrapStyle(el)"
+              @pointerdown.stop="startDrag($event, el)"
+              @dblclick.stop="el.type==='text' && (el._editing=true)"
+            >
+              <!-- Text -->
+              <template x-if="el.type === 'text'">
+                <div>
+                  <template x-if="!el._editing">
+                    <div
+                      class="el-text"
+                      :style="textStyle(el)"
+                      x-text="el.text"
+                    ></div>
+                  </template>
+                  <template x-if="el._editing">
+                    <textarea
+                      class="inline-edit"
+                      x-model="el.text"
+                      :style="textStyle(el)"
+                      @blur="el._editing=false"
+                      @keydown.esc="el._editing=false"
+                      x-effect="el._editing && $nextTick(() => $el.focus())"
+                    ></textarea>
+                  </template>
+                </div>
+              </template>
+
+              <!-- Icon -->
+              <template x-if="el.type === 'icon'">
+                <div class="el-icon" :style="iconWrapStyle(el)">
+                  <i :class="el.icon" :style="{color:el.color, fontSize: el.size+'px'}"></i>
+                </div>
+              </template>
+
+              <!-- Image -->
+              <template x-if="el.type === 'image'">
+                <div class="el-image" :style="{width:'100%',height:'100%',borderRadius:(el.borderRadius||0)+'px',overflow:'hidden'}">
+                  <img :src="el.src" :style="{objectFit: el.fit||'contain', width:'100%', height:'100%', borderRadius:(el.borderRadius||0)+'px'}"/>
+                </div>
+              </template>
+
+              <!-- Handles (only when selected) -->
+              <template x-if="selectedEl && selectedEl.id === el.id">
+                <div>
+                  <div class="delete-handle" @pointerdown.stop="deleteSelected()"><i class="fa fa-times"></i></div>
+                  <div class="resize-handle" @pointerdown.stop="startResize($event, el)"></div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Slide Nav -->
+      <div class="slide-nav">
+        <template x-for="(slide, i) in slides" :key="slide.id">
+          <div
+            class="slide-thumb"
+            :class="{active: i===currentIdx}"
+            @click="currentIdx=i; selectedEl=null"
+          >
+            <div class="slide-thumb-canvas" :style="thumbCanvasStyle(slide)" :id="'thumb-'+slide.id">
+              <!-- Bg -->
+              <div class="slide-bg" :style="slideBgStyleFor(slide)"></div>
+              <div class="slide-bg-overlay" :style="overlayStyleFor(slide)"></div>
+              <!-- Elements thumb -->
+              <template x-for="el in slide.elements" :key="el.id">
+                <div :style="elementWrapStyle(el)">
+                  <template x-if="el.type==='text'">
+                    <div class="el-text" :style="textStyle(el)" x-text="el.text"></div>
+                  </template>
+                  <template x-if="el.type==='icon'">
+                    <div class="el-icon" :style="iconWrapStyle(el)">
+                      <i :class="el.icon" :style="{color:el.color, fontSize: el.size+'px'}"></i>
+                    </div>
+                  </template>
+                  <template x-if="el.type==='image'">
+                    <img :src="el.src" :style="{position:'absolute',left:0,top:0,width:'100%',height:'100%',objectFit:el.fit||'contain'}"/>
+                  </template>
+                </div>
+              </template>
+              <!-- Slide number -->
+              <div style="position:absolute;bottom:6px;right:8px;font-size:28px;font-weight:700;color:#fff;opacity:.5;pointer-events:none;" x-text="i+1"></div>
+            </div>
+          </div>
+        </template>
+        <div class="slide-thumb-add" @click="addSlide()"><i class="fa fa-plus"></i></div>
+      </div>
+
+      <!-- Keyboard hint -->
+      <div style="font-size:0.72rem;color:var(--text-muted);text-align:center">
+        <i class="fa fa-info-circle"></i> Double-click text to edit • Drag to move • Drag corner to resize
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" :class="{show: toast.show}" x-text="toast.msg"></div>
+</div>
+
+<script>
+function carousel() {
+  return {
+    tab: 'add',
+    slides: [],
+    currentIdx: 0,
+    selectedEl: null,
+    newText: 'Your Text Here',
+    newTextColor: '#ffffff',
+    newTextSize: 80,
+    newTextWeight: '700',
+    newTextFont: 'Inter, sans-serif',
+    newImageUrl: '',
+    newIconColor: '#ffffff',
+    newIconSize: 80,
+    iconSearch: '',
+    toast: { show: false, msg: '' },
+
+    // ─── Icon Library ───
+    icons: [
+      {name:'fa-solid fa-star',class:'fa-solid fa-star',label:'Star'},
+      {name:'fa-solid fa-heart',class:'fa-solid fa-heart',label:'Heart'},
+      {name:'fa-solid fa-check',class:'fa-solid fa-check',label:'Check'},
+      {name:'fa-solid fa-bolt',class:'fa-solid fa-bolt',label:'Bolt'},
+      {name:'fa-solid fa-fire',class:'fa-solid fa-fire',label:'Fire'},
+      {name:'fa-solid fa-rocket',class:'fa-solid fa-rocket',label:'Rocket'},
+      {name:'fa-solid fa-lightbulb',class:'fa-solid fa-lightbulb',label:'Lightbulb'},
+      {name:'fa-solid fa-trophy',class:'fa-solid fa-trophy',label:'Trophy'},
+      {name:'fa-solid fa-crown',class:'fa-solid fa-crown',label:'Crown'},
+      {name:'fa-solid fa-gem',class:'fa-solid fa-gem',label:'Gem'},
+      {name:'fa-solid fa-thumbs-up',class:'fa-solid fa-thumbs-up',label:'Thumbs Up'},
+      {name:'fa-solid fa-thumbs-down',class:'fa-solid fa-thumbs-down',label:'Thumbs Down'},
+      {name:'fa-solid fa-chart-line',class:'fa-solid fa-chart-line',label:'Chart Line'},
+      {name:'fa-solid fa-chart-bar',class:'fa-solid fa-chart-bar',label:'Chart Bar'},
+      {name:'fa-solid fa-chart-pie',class:'fa-solid fa-chart-pie',label:'Chart Pie'},
+      {name:'fa-solid fa-arrow-up',class:'fa-solid fa-arrow-up',label:'Arrow Up'},
+      {name:'fa-solid fa-arrow-right',class:'fa-solid fa-arrow-right',label:'Arrow Right'},
+      {name:'fa-solid fa-arrow-down',class:'fa-solid fa-arrow-down',label:'Arrow Down'},
+      {name:'fa-solid fa-arrow-left',class:'fa-solid fa-arrow-left',label:'Arrow Left'},
+      {name:'fa-solid fa-circle-check',class:'fa-solid fa-circle-check',label:'Circle Check'},
+      {name:'fa-solid fa-circle-xmark',class:'fa-solid fa-circle-xmark',label:'Circle X'},
+      {name:'fa-solid fa-circle-info',class:'fa-solid fa-circle-info',label:'Info'},
+      {name:'fa-solid fa-circle-question',class:'fa-solid fa-circle-question',label:'Question'},
+      {name:'fa-solid fa-triangle-exclamation',class:'fa-solid fa-triangle-exclamation',label:'Warning'},
+      {name:'fa-solid fa-bell',class:'fa-solid fa-bell',label:'Bell'},
+      {name:'fa-solid fa-envelope',class:'fa-solid fa-envelope',label:'Envelope'},
+      {name:'fa-solid fa-phone',class:'fa-solid fa-phone',label:'Phone'},
+      {name:'fa-solid fa-location-dot',class:'fa-solid fa-location-dot',label:'Location'},
+      {name:'fa-solid fa-user',class:'fa-solid fa-user',label:'User'},
+      {name:'fa-solid fa-users',class:'fa-solid fa-users',label:'Users'},
+      {name:'fa-solid fa-building',class:'fa-solid fa-building',label:'Building'},
+      {name:'fa-solid fa-briefcase',class:'fa-solid fa-briefcase',label:'Briefcase'},
+      {name:'fa-solid fa-graduation-cap',class:'fa-solid fa-graduation-cap',label:'Education'},
+      {name:'fa-solid fa-book',class:'fa-solid fa-book',label:'Book'},
+      {name:'fa-solid fa-magnifying-glass',class:'fa-solid fa-magnifying-glass',label:'Search'},
+      {name:'fa-solid fa-gear',class:'fa-solid fa-gear',label:'Gear'},
+      {name:'fa-solid fa-lock',class:'fa-solid fa-lock',label:'Lock'},
+      {name:'fa-solid fa-unlock',class:'fa-solid fa-unlock',label:'Unlock'},
+      {name:'fa-solid fa-shield',class:'fa-solid fa-shield',label:'Shield'},
+      {name:'fa-solid fa-key',class:'fa-solid fa-key',label:'Key'},
+      {name:'fa-solid fa-dollar-sign',class:'fa-solid fa-dollar-sign',label:'Dollar'},
+      {name:'fa-solid fa-euro-sign',class:'fa-solid fa-euro-sign',label:'Euro'},
+      {name:'fa-solid fa-percent',class:'fa-solid fa-percent',label:'Percent'},
+      {name:'fa-solid fa-tags',class:'fa-solid fa-tags',label:'Tags'},
+      {name:'fa-solid fa-gift',class:'fa-solid fa-gift',label:'Gift'},
+      {name:'fa-solid fa-handshake',class:'fa-solid fa-handshake',label:'Handshake'},
+      {name:'fa-solid fa-hands-helping',class:'fa-solid fa-hands-clapping',label:'Clapping'},
+      {name:'fa-solid fa-globe',class:'fa-solid fa-globe',label:'Globe'},
+      {name:'fa-solid fa-wifi',class:'fa-solid fa-wifi',label:'WiFi'},
+      {name:'fa-solid fa-laptop',class:'fa-solid fa-laptop',label:'Laptop'},
+      {name:'fa-solid fa-mobile',class:'fa-solid fa-mobile',label:'Mobile'},
+      {name:'fa-solid fa-tablet',class:'fa-solid fa-tablet',label:'Tablet'},
+      {name:'fa-solid fa-server',class:'fa-solid fa-server',label:'Server'},
+      {name:'fa-solid fa-database',class:'fa-solid fa-database',label:'Database'},
+      {name:'fa-solid fa-code',class:'fa-solid fa-code',label:'Code'},
+      {name:'fa-solid fa-terminal',class:'fa-solid fa-terminal',label:'Terminal'},
+      {name:'fa-solid fa-bug',class:'fa-solid fa-bug',label:'Bug'},
+      {name:'fa-solid fa-robot',class:'fa-solid fa-robot',label:'Robot'},
+      {name:'fa-solid fa-microchip',class:'fa-solid fa-microchip',label:'Chip'},
+      {name:'fa-solid fa-brain',class:'fa-solid fa-brain',label:'Brain'},
+      {name:'fa-solid fa-eye',class:'fa-solid fa-eye',label:'Eye'},
+      {name:'fa-solid fa-camera',class:'fa-solid fa-camera',label:'Camera'},
+      {name:'fa-solid fa-video',class:'fa-solid fa-video',label:'Video'},
+      {name:'fa-solid fa-music',class:'fa-solid fa-music',label:'Music'},
+      {name:'fa-solid fa-play',class:'fa-solid fa-play',label:'Play'},
+      {name:'fa-solid fa-pause',class:'fa-solid fa-pause',label:'Pause'},
+      {name:'fa-solid fa-stop',class:'fa-solid fa-stop',label:'Stop'},
+      {name:'fa-solid fa-forward',class:'fa-solid fa-forward',label:'Forward'},
+      {name:'fa-solid fa-backward',class:'fa-solid fa-backward',label:'Backward'},
+      {name:'fa-solid fa-share',class:'fa-solid fa-share',label:'Share'},
+      {name:'fa-solid fa-link',class:'fa-solid fa-link',label:'Link'},
+      {name:'fa-solid fa-bookmark',class:'fa-solid fa-bookmark',label:'Bookmark'},
+      {name:'fa-solid fa-flag',class:'fa-solid fa-flag',label:'Flag'},
+      {name:'fa-solid fa-paper-plane',class:'fa-solid fa-paper-plane',label:'Send'},
+      {name:'fa-solid fa-comment',class:'fa-solid fa-comment',label:'Comment'},
+      {name:'fa-solid fa-comments',class:'fa-solid fa-comments',label:'Comments'},
+      {name:'fa-solid fa-hashtag',class:'fa-solid fa-hashtag',label:'Hashtag'},
+      {name:'fa-solid fa-at',class:'fa-solid fa-at',label:'At'},
+      {name:'fa-brands fa-linkedin',class:'fa-brands fa-linkedin',label:'LinkedIn'},
+      {name:'fa-brands fa-twitter',class:'fa-brands fa-twitter',label:'Twitter'},
+      {name:'fa-brands fa-instagram',class:'fa-brands fa-instagram',label:'Instagram'},
+      {name:'fa-brands fa-facebook',class:'fa-brands fa-facebook',label:'Facebook'},
+      {name:'fa-brands fa-youtube',class:'fa-brands fa-youtube',label:'YouTube'},
+      {name:'fa-brands fa-github',class:'fa-brands fa-github',label:'GitHub'},
+      {name:'fa-brands fa-slack',class:'fa-brands fa-slack',label:'Slack'},
+      {name:'fa-brands fa-discord',class:'fa-brands fa-discord',label:'Discord'},
+      {name:'fa-solid fa-sun',class:'fa-solid fa-sun',label:'Sun'},
+      {name:'fa-solid fa-moon',class:'fa-solid fa-moon',label:'Moon'},
+      {name:'fa-solid fa-cloud',class:'fa-solid fa-cloud',label:'Cloud'},
+      {name:'fa-solid fa-snowflake',class:'fa-solid fa-snowflake',label:'Snowflake'},
+      {name:'fa-solid fa-leaf',class:'fa-solid fa-leaf',label:'Leaf'},
+      {name:'fa-solid fa-seedling',class:'fa-solid fa-seedling',label:'Seedling'},
+      {name:'fa-solid fa-tree',class:'fa-solid fa-tree',label:'Tree'},
+      {name:'fa-solid fa-recycle',class:'fa-solid fa-recycle',label:'Recycle'},
+      {name:'fa-solid fa-hands',class:'fa-solid fa-hands',label:'Hands'},
+      {name:'fa-solid fa-hand-holding-heart',class:'fa-solid fa-hand-holding-heart',label:'Heart Hand'},
+      {name:'fa-solid fa-infinity',class:'fa-solid fa-infinity',label:'Infinity'},
+      {name:'fa-solid fa-atom',class:'fa-solid fa-atom',label:'Atom'},
+      {name:'fa-solid fa-dna',class:'fa-solid fa-dna',label:'DNA'},
+    ],
+
+    filteredIcons() {
+      const q = this.iconSearch.toLowerCase();
+      if (!q) return this.icons;
+      return this.icons.filter(ic => ic.label.toLowerCase().includes(q) || ic.name.includes(q));
+    },
+
+    init() {
+      this.addSlide();
+    },
+
+    // ─── Slide helpers ───
+    makeSlide() {
+      return {
+        id: Date.now() + Math.random(),
+        bgColor: '#1e1e2e',
+        bgImage: '',
+        overlayColor: '#000000',
+        overlayOpacity: 0,
+        elements: []
+      };
+    },
+
+    currentSlide() {
+      return this.slides[this.currentIdx] || this.slides[0];
+    },
+
+    addSlide() {
+      const s = this.makeSlide();
+      this.slides.push(s);
+      this.currentIdx = this.slides.length - 1;
+    },
+
+    duplicateSlide() {
+      const clone = JSON.parse(JSON.stringify(this.currentSlide()));
+      clone.id = Date.now() + Math.random();
+      clone.elements = clone.elements.map(e => ({ ...e, id: Date.now() + Math.random() }));
+      this.slides.splice(this.currentIdx + 1, 0, clone);
+      this.currentIdx++;
+    },
+
+    deleteSlide() {
+      if (this.slides.length <= 1) return;
+      this.slides.splice(this.currentIdx, 1);
+      if (this.currentIdx >= this.slides.length) this.currentIdx = this.slides.length - 1;
+    },
+
+    // ─── Element factories ───
+    makeEl(type, extra) {
+      return {
+        id: Date.now() + Math.random(),
+        type,
+        x: 200,
+        y: 200,
+        rotate: 0,
+        opacity: 1,
+        ...extra
+      };
+    },
+
+    addText() {
+      if (!this.newText.trim()) return;
+      const el = this.makeEl('text', {
+        text: this.newText,
+        color: this.newTextColor,
+        size: +this.newTextSize,
+        weight: this.newTextWeight,
+        font: this.newTextFont,
+        align: 'left',
+        lineHeight: 1.3,
+        w: 600,
+        h: 120
+      });
+      this.currentSlide().elements.push(el);
+      this.selectedEl = el;
+      this.tab = 'props';
+    },
+
+    addIcon(iconClass) {
+      const el = this.makeEl('icon', {
+        icon: iconClass,
+        color: this.newIconColor,
+        size: +this.newIconSize,
+        w: +this.newIconSize + 20,
+        h: +this.newIconSize + 20
+      });
+      this.currentSlide().elements.push(el);
+      this.selectedEl = el;
+      this.tab = 'props';
+    },
+
+    addImageFromUrl() {
+      if (!this.newImageUrl.trim()) return;
+      const el = this.makeEl('image', { src: this.newImageUrl, w: 400, h: 400, fit: 'contain', borderRadius: 0 });
+      this.currentSlide().elements.push(el);
+      this.selectedEl = el;
+      this.tab = 'props';
+      this.newImageUrl = '';
+    },
+
+    addImageFromFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const el = this.makeEl('image', { src: e.target.result, w: 400, h: 400, fit: 'contain', borderRadius: 0 });
+        this.currentSlide().elements.push(el);
+        this.selectedEl = el;
+        this.tab = 'props';
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    },
+
+    deleteSelected() {
+      if (!this.selectedEl) return;
+      const slide = this.currentSlide();
+      const idx = slide.elements.findIndex(e => e.id === this.selectedEl.id);
+      if (idx !== -1) slide.elements.splice(idx, 1);
+      this.selectedEl = null;
+    },
+
+    openProps() {
+      // just switch tab
+    },
+
+    // ─── Styles ───
+    slideScale() {
+      const wrapper = document.getElementById('slide-wrapper');
+      if (!wrapper) return 1;
+      const w = wrapper.clientWidth;
+      return w / 1080;
+    },
+
+    slideCanvasStyle() {
+      const scale = this.slideScale();
+      return `transform: scale(${scale}); width: 1080px; height: 1080px;`;
+    },
+
+    slideBgStyle() {
+      const s = this.currentSlide();
+      return this.slideBgStyleFor(s);
+    },
+
+    slideBgStyleFor(s) {
+      let style = `background-color: ${s.bgColor};`;
+      if (s.bgImage) style += ` background-image: url('${s.bgImage}'); background-size: cover; background-position: center;`;
+      return style;
+    },
+
+    overlayStyle() {
+      const s = this.currentSlide();
+      return this.overlayStyleFor(s);
+    },
+
+    overlayStyleFor(s) {
+      if (!s.overlayOpacity || s.overlayOpacity <= 0) return 'display:none';
+      return `background: ${s.overlayColor}; opacity: ${s.overlayOpacity};`;
+    },
+
+    elementWrapStyle(el) {
+      const rot = el.rotate || 0;
+      const opacity = el.opacity !== undefined ? el.opacity : 1;
+      let style = `left:${el.x}px; top:${el.y}px; transform: rotate(${rot}deg); opacity:${opacity};`;
+      if (el.type !== 'text') {
+        style += ` width:${el.w}px; height:${el.h}px;`;
+      }
+      return style;
+    },
+
+    textStyle(el) {
+      return `color:${el.color||'#fff'}; font-size:${el.size||60}px; font-weight:${el.weight||700}; font-family:${el.font||'Inter, sans-serif'}; text-align:${el.align||'left'}; line-height:${el.lineHeight||1.3}; width:${el.w||600}px; min-height:${el.h||80}px;`;
+    },
+
+    iconWrapStyle(el) {
+      return `width:${el.w}px; height:${el.h}px; display:flex; align-items:center; justify-content:center;`;
+    },
+
+    thumbCanvasStyle(slide) {
+      return `transform: scale(${60/1080}); width:1080px; height:1080px;`;
+    },
+
+    // ─── Drag ───
+    _drag: null,
+
+    startDrag(e, el) {
+      this.selectedEl = el;
+      const scale = this.slideScale();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const origX = el.x;
+      const origY = el.y;
+
+      const onMove = (me) => {
+        el.x = origX + (me.clientX - startX) / scale;
+        el.y = origY + (me.clientY - startY) / scale;
+      };
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    },
+
+    startResize(e, el) {
+      e.stopPropagation();
+      const scale = this.slideScale();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const origW = el.w || 100;
+      const origH = el.h || 100;
+
+      const onMove = (me) => {
+        el.w = Math.max(20, origW + (me.clientX - startX) / scale);
+        el.h = Math.max(20, origH + (me.clientY - startY) / scale);
+        if (el.type === 'icon') el.size = Math.round(Math.min(el.w, el.h) * 0.8);
+      };
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    },
+
+    // ─── Export ───
+    async getSlideCanvas(idx) {
+      const prevIdx = this.currentIdx;
+      this.currentIdx = idx;
+      this.selectedEl = null;
+      await this.$nextTick();
+      await new Promise(r => setTimeout(r, 100));
+
+      const canvasEl = document.getElementById('slide-' + this.slides[idx].id);
+      const canvas = await html2canvas(canvasEl, {
+        width: 1080,
+        height: 1080,
+        scale: 1,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null
+      });
+      this.currentIdx = prevIdx;
+      await this.$nextTick();
+      return canvas;
+    },
+
+    async exportImages() {
+      this.showToast('Exporting images...');
+      for (let i = 0; i < this.slides.length; i++) {
+        const canvas = await this.getSlideCanvas(i);
+        const link = document.createElement('a');
+        link.download = `carousel-slide-${i+1}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        await new Promise(r => setTimeout(r, 300));
+      }
+      this.showToast('Images exported!');
+    },
+
+    async exportPDF() {
+      this.showToast('Generating PDF...');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [1080, 1080] });
+
+      for (let i = 0; i < this.slides.length; i++) {
+        if (i > 0) pdf.addPage([1080, 1080], 'portrait');
+        const canvas = await this.getSlideCanvas(i);
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 0, 0, 1080, 1080);
+        await new Promise(r => setTimeout(r, 200));
+      }
+
+      pdf.save('linkedin-carousel.pdf');
+      this.showToast('PDF exported!');
+    },
+
+    showToast(msg) {
+      this.toast.msg = msg;
+      this.toast.show = true;
+      clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(() => { this.toast.show = false; }, 2500);
+    }
+  };
+}
+</script>
+</body>
+</html>
