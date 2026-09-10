@@ -8,53 +8,153 @@
       name="description"
       content="Upload SVG files and add animations to each element to make your graphics come alive. Really simple, open source free tool for SVG animation."
     />
+    <link rel="canonical" href="https://saravanapriyanm.github.io/svg-animate/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <script
       src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
       defer
     ></script>
     <style>
-      .svg-element:hover {
-        stroke: #3b82f6 !important;
-        stroke-width: 2 !important;
+      :root {
+        --bg: #f2efe8;
+        --bg-accent: #e9efe6;
+        --panel: #fdfbf7;
+        --panel-border: #d9d2c5;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --brand: #0f766e;
+        --brand-soft: #ccfbf1;
+        --danger: #dc2626;
       }
+
+      body {
+        font-family: "Instrument Sans", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 15% 10%, #dcece6 0%, transparent 35%),
+          radial-gradient(circle at 90% 85%, #f7e6c8 0%, transparent 30%),
+          linear-gradient(135deg, var(--bg), var(--bg-accent));
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: "Space Grotesk", sans-serif;
+        letter-spacing: -0.02em;
+      }
+
+      .app-shell {
+        max-width: 1440px;
+      }
+
+      .panel {
+        background: color-mix(in srgb, var(--panel) 88%, white 12%);
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        box-shadow: 0 16px 30px -25px rgba(20, 30, 25, 0.55);
+      }
+
+      .field {
+        border: 1px solid #cfc6b7;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .field:focus {
+        outline: 2px solid #14b8a6;
+        outline-offset: 1px;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, #0f766e, #0d9488);
+      }
+
+      .primary-btn:hover {
+        filter: brightness(1.08);
+      }
+
+      .secondary-btn {
+        background: linear-gradient(135deg, #b91c1c, #dc2626);
+      }
+
+      .download-btn {
+        background: linear-gradient(135deg, #0369a1, #0ea5e9);
+      }
+
+      .svg-element {
+        transition: stroke 0.18s ease, filter 0.2s ease;
+      }
+
+      .svg-element:hover {
+        stroke: #0d9488 !important;
+        stroke-width: 2 !important;
+        filter: drop-shadow(0 0 4px rgba(13, 148, 136, 0.45));
+      }
+
       .selected-element {
-        stroke: #ef4444 !important;
+        stroke: #dc2626 !important;
         stroke-width: 3 !important;
       }
 
-      /* Dark theme scrollbars */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #111827;
+        background: #e5ded1;
       }
       ::-webkit-scrollbar-thumb {
-        background: #4b5563;
+        background: #b2a694;
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #6b7280;
+        background: #948978;
       }
 
-      /* Firefox scrollbar */
       * {
-        scrollbar-color: #4b5563 #111827;
+        scrollbar-color: #b2a694 #e5ded1;
         scrollbar-width: thin;
+      }
+
+      @media (max-width: 1024px) {
+        .app-shell {
+          padding-bottom: 1rem;
+        }
       }
     </style>
   </head>
-  <body class="bg-black text-gray-100 h-screen" x-data="svgAnimator()">
-    <div class="container mx-auto px-4 py-4 h-full">
+  <body class="h-screen" x-data="svgAnimator()">
+    <div class="app-shell mx-auto px-4 py-4 h-full">
       <!-- Header -->
-      <div class="text-center mb-4 flex items-center justify-between space-x-3">
+      <header class="mb-4 panel px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div class="flex items-center space-x-3">
           <img src="logo-animated.svg" alt="SVG Animator Logo" class="h-12" />
-          <h1 class="text-3xl font-semibold text-gray-100">SVG Animator</h1>
+          <div>
+            <h1 class="text-3xl font-semibold text-gray-900">SVG Animator</h1>
+            <p class="text-sm text-gray-600">Animate SVG parts in seconds</p>
+          </div>
         </div>
-        <p class="text-gray-300">So easy, even backend developers can do it</p>
+        <p class="text-gray-700 text-sm md:text-base">
+          So easy, even backend developers can do it
+        </p>
+      </header>
+
+      <div
+        x-show="toastMessage"
+        x-transition.opacity.duration.250ms
+        class="fixed top-4 right-4 z-50"
+      >
+        <div
+          class="rounded-xl px-4 py-3 shadow-lg text-white"
+          :class="toastType === 'error' ? 'bg-red-600' : 'bg-teal-700'"
+          x-text="toastMessage"
+        ></div>
       </div>
 
       <div
@@ -64,11 +164,11 @@
         <div class="lg:col-span-1 space-y-4 overflow-y-auto pr-1">
           <!-- File Upload -->
           <div
-            class="bg-gray-900 border border-gray-800 rounded-lg shadow-md p-4 text-sm"
+            class="panel p-4 text-sm"
           >
-            <h2 class="text-lg font-semibold text-gray-100 mb-3">Upload SVG</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Upload SVG</h2>
             <div
-              class="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
+              class="border-2 border-dashed border-[#bdb3a2] rounded-lg p-6 text-center hover:border-teal-600 transition-colors cursor-pointer bg-[#fffefc]"
               @click="$refs.fileInput.click()"
               @dragover.prevent
               @dragenter.prevent
@@ -82,7 +182,7 @@
                 class="hidden"
               />
               <svg
-                class="mx-auto h-12 w-12 text-gray-400 mb-4"
+                class="mx-auto h-12 w-12 text-[#8d8172] mb-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -94,40 +194,43 @@
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <p class="text-gray-300" x-show="!svgContent">
+              <p class="text-gray-700" x-show="!svgContent">
                 <span class="font-medium">Click to upload</span> or drag and
                 drop<br />
-                <span class="text-sm">SVG files only</span>
+                <span class="text-sm text-gray-500">SVG files only</span>
               </p>
-              <p class="text-green-600" x-show="svgContent">
+              <p class="text-teal-700 font-medium" x-show="svgContent">
                 ✓ SVG file loaded successfully
               </p>
             </div>
+            <p class="text-xs text-gray-600 mt-3">
+              Tip: click any shape in preview or list to edit its animation.
+            </p>
           </div>
 
           <!-- SVG Elements List -->
           <div
-            class="bg-gray-900 border border-gray-800 rounded-lg shadow-md p-4 text-sm"
+            class="panel p-4 text-sm"
             x-show="svgElements.length > 0"
           >
-            <h2 class="text-lg font-semibold text-gray-100 mb-3">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">
               SVG Elements
             </h2>
             <div class="space-y-2 max-h-64 overflow-y-auto">
               <template x-for="(element, index) in svgElements" :key="index">
                 <div
-                  class="p-3 border rounded-lg cursor-pointer hover:bg-blue-900/30 transition-colors"
-                  :class="selectedElement === element ? 'bg-blue-900/40 border-blue-500' : 'bg-gray-800 border-gray-700'"
+                  class="p-3 border rounded-lg cursor-pointer hover:bg-teal-50 transition-colors"
+                  :class="selectedElement === element ? 'bg-teal-100 border-teal-700' : 'bg-[#fffefc] border-[#d7cebf]'"
                   @click="selectElement(element)"
                 >
                   <div class="flex justify-between items-center">
-                    <span class="font-medium" x-text="element.tagName"></span>
+                    <span class="font-medium text-gray-800" x-text="element.tagName"></span>
                     <span
-                      class="text-sm text-gray-400"
+                      class="text-sm text-gray-500"
                       x-text="'#' + (index + 1)"
                     ></span>
                   </div>
-                  <div class="text-sm text-gray-300 mt-1" x-show="element.id">
+                  <div class="text-sm text-gray-600 mt-1" x-show="element.id">
                     ID: <span x-text="element.id"></span>
                   </div>
                 </div>
@@ -139,26 +242,26 @@
         <!-- SVG Preview Panel -->
         <div class="lg:col-span-2 h-full flex flex-col">
           <div
-            class="bg-gray-900 border border-gray-800 rounded-lg shadow-md p-4 h-full flex flex-col"
+            class="panel p-4 h-full flex flex-col"
           >
             <div class="flex justify-between items-center mb-3 text-sm">
-              <h2 class="text-lg font-semibold text-gray-100">
+              <h2 class="text-lg font-semibold text-gray-900">
                 Preview(Select any element)
               </h2>
               <button
                 @click="downloadSvg()"
                 x-show="svgContent"
-                class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors text-sm"
+                class="download-btn text-white py-2 px-4 rounded-md transition-colors text-sm"
               >
                 Download SVG
               </button>
             </div>
 
             <div
-              class="border-2 border-gray-700 rounded-lg p-4 min-h-[260px] bg-gray-900"
+              class="border-2 border-[#d7cebf] rounded-lg p-4 min-h-[260px] bg-[#fffefc]"
               x-show="!svgContent"
             >
-              <div class="flex items-center justify-center h-64 text-gray-400">
+              <div class="flex items-center justify-center h-64 text-gray-500">
                 <div class="text-center">
                   <svg
                     class="mx-auto h-16 w-16 text-gray-400 mb-4"
@@ -182,10 +285,11 @@
             </div>
 
             <div
-              class="border-2 border-gray-700 rounded-lg p-3 flex-1 bg-gray-900 overflow-auto"
+              class="border-2 border-[#d7cebf] rounded-lg p-3 flex-1 bg-[#fffefc] overflow-auto"
               x-show="svgContent"
               id="svgPreview"
               x-html="svgContent"
+              @click="clearSelection()"
             ></div>
           </div>
         </div>
@@ -194,22 +298,22 @@
         <div class="lg:col-span-1 space-y-4 overflow-y-auto pr-1">
           <!-- Animation Controls -->
           <div
-            class="bg-gray-900 border border-gray-800 rounded-lg shadow-md p-4 text-sm"
+            class="panel p-4 text-sm"
             x-show="selectedElement"
           >
-            <h2 class="text-lg font-semibold text-gray-100 mb-3">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">
               Animation Settings
             </h2>
             <div class="space-y-3">
               <!-- Animation Type -->
               <div>
-                <label class="block text-xs font-medium text-gray-200 mb-2"
+                <label class="block text-xs font-medium text-gray-700 mb-2"
                   >Animation Type</label
                 >
                 <select
                   x-model="animationType"
                   @change="updateAnimationControls()"
-                  class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                  class="field w-full px-2 py-1.5 rounded-md text-sm"
                 >
                   <option value="rotate">Rotate</option>
                   <option value="scale">Scale</option>
@@ -221,7 +325,7 @@
 
               <!-- Animation-specific controls -->
               <div x-show="animationType === 'rotate'">
-                <label class="block text-xs font-medium text-gray-200 mb-2"
+                <label class="block text-xs font-medium text-gray-700 mb-2"
                   >Rotation (degrees)</label
                 >
                 <input
@@ -230,12 +334,12 @@
                   min="-360"
                   max="360"
                   step="10"
-                  class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                  class="field w-full px-2 py-1.5 rounded-md text-sm"
                 />
               </div>
 
               <div x-show="animationType === 'scale'">
-                <label class="block text-xs font-medium text-gray-200 mb-2"
+                <label class="block text-xs font-medium text-gray-700 mb-2"
                   >Scale Factor</label
                 >
                 <input
@@ -244,14 +348,14 @@
                   min="0.1"
                   max="3"
                   step="0.1"
-                  class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                  class="field w-full px-2 py-1.5 rounded-md text-sm"
                 />
               </div>
 
               <div x-show="animationType === 'translate'">
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="block text-xs font-medium text-gray-200 mb-1"
+                    <label class="block text-xs font-medium text-gray-700 mb-1"
                       >X Distance (px)</label
                     >
                     <input
@@ -260,11 +364,11 @@
                       min="-200"
                       max="200"
                       step="5"
-                      class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                      class="field w-full px-2 py-1.5 rounded-md text-sm"
                     />
                   </div>
                   <div>
-                    <label class="block text-xs font-medium text-gray-200 mb-1"
+                    <label class="block text-xs font-medium text-gray-700 mb-1"
                       >Y Distance (px)</label
                     >
                     <input
@@ -273,14 +377,14 @@
                       min="-200"
                       max="200"
                       step="5"
-                      class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                      class="field w-full px-2 py-1.5 rounded-md text-sm"
                     />
                   </div>
                 </div>
               </div>
 
               <div x-show="animationType === 'fade'">
-                <label class="block text-xs font-medium text-gray-200 mb-2"
+                <label class="block text-xs font-medium text-gray-700 mb-2"
                   >Minimum Opacity</label
                 >
                 <input
@@ -289,14 +393,14 @@
                   min="0"
                   max="1"
                   step="0.1"
-                  class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                  class="field w-full px-2 py-1.5 rounded-md text-sm"
                 />
               </div>
 
               <!-- Timing Controls -->
               <div class="border-t pt-3">
                 <h3
-                  class="text-sm font-medium text-gray-100 mb-2 cursor-pointer flex items-center gap-2"
+                  class="text-sm font-medium text-gray-800 mb-2 cursor-pointer flex items-center gap-2"
                   @click="isTimingExpanded = !isTimingExpanded"
                 >
                   <span>Timing</span>
@@ -318,7 +422,7 @@
                 <div x-show="isTimingExpanded" class="space-y-3">
                   <!-- Duration -->
                   <div class="mb-3">
-                    <label class="block text-xs font-medium text-gray-200 mb-2"
+                    <label class="block text-xs font-medium text-gray-700 mb-2"
                       >Duration (seconds)</label
                     >
                     <input
@@ -327,13 +431,13 @@
                       min="0.1"
                       max="10"
                       step="0.1"
-                      class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                      class="field w-full px-2 py-1.5 rounded-md text-sm"
                     />
                   </div>
 
                   <!-- Delay -->
                   <div class="mb-3">
-                    <label class="block text-xs font-medium text-gray-200 mb-2"
+                    <label class="block text-xs font-medium text-gray-700 mb-2"
                       >Delay (seconds)</label
                     >
                     <input
@@ -342,18 +446,18 @@
                       min="0"
                       max="5"
                       step="0.1"
-                      class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                      class="field w-full px-2 py-1.5 rounded-md text-sm"
                     />
                   </div>
 
                   <!-- Easing -->
                   <div class="mb-3">
-                    <label class="block text-xs font-medium text-gray-200 mb-2"
+                    <label class="block text-xs font-medium text-gray-700 mb-2"
                       >Easing</label
                     >
                     <select
                       x-model="animationEasing"
-                      class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                      class="field w-full px-2 py-1.5 rounded-md text-sm"
                     >
                       <option value="linear">Linear</option>
                       <option value="ease">Ease</option>
@@ -368,12 +472,12 @@
 
                   <!-- Iteration Count -->
                   <div class="mb-3">
-                    <label class="block text-xs font-medium text-gray-200 mb-2"
+                    <label class="block text-xs font-medium text-gray-700 mb-2"
                       >Repeat</label
                     >
                     <select
                       x-model="animationIteration"
-                      class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                      class="field w-full px-2 py-1.5 rounded-md text-sm"
                     >
                       <option value="1">Once</option>
                       <option value="infinite">Infinite</option>
@@ -385,12 +489,12 @@
 
                   <!-- Animation Direction -->
                   <div class="mb-3">
-                    <label class="block text-xs font-medium text-gray-200 mb-2"
+                    <label class="block text-xs font-medium text-gray-700 mb-2"
                       >Direction</label
                     >
                     <select
                       x-model="animationDirection"
-                      class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                      class="field w-full px-2 py-1.5 rounded-md text-sm"
                     >
                       <option value="normal">Normal</option>
                       <option value="reverse">Reverse</option>
@@ -403,12 +507,12 @@
 
                   <!-- Animation Fill Mode -->
                   <div>
-                    <label class="block text-xs font-medium text-gray-200 mb-2"
+                    <label class="block text-xs font-medium text-gray-700 mb-2"
                       >Fill Mode</label
                     >
                     <select
                       x-model="animationFillMode"
-                      class="w-full px-2 py-1.5 border border-gray-700 bg-gray-800 text-gray-100 rounded-md text-sm"
+                      class="field w-full px-2 py-1.5 rounded-md text-sm"
                     >
                       <option value="none">None (Reset)</option>
                       <option value="forwards">Forwards (Hold End)</option>
@@ -423,14 +527,14 @@
               <div class="border-t pt-3 flex gap-2">
                 <button
                   @click="applyAnimation()"
-                  class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                  class="flex-1 primary-btn text-white py-2 px-4 rounded-md transition-colors text-sm"
                 >
                   Apply
                 </button>
 
                 <button
                   @click="removeAnimation()"
-                  class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors text-sm"
+                  class="flex-1 secondary-btn text-white py-2 px-4 rounded-md transition-colors text-sm"
                 >
                   Remove
                 </button>
@@ -444,6 +548,9 @@
     <script>
       function svgAnimator() {
         return {
+          toastMessage: "",
+          toastType: "success",
+          toastTimer: null,
           svgContent: "",
           svgElements: [],
           selectedElement: null,
@@ -476,7 +583,7 @@
             ];
 
             if (!fileName.endsWith(".svg") && !validTypes.includes(file.type)) {
-              alert("Please upload a valid SVG file");
+              this.showToast("Please upload a valid SVG file", "error");
               return;
             }
 
@@ -486,8 +593,9 @@
 
               // Validate that it's actually SVG content
               if (!content.includes("<svg")) {
-                alert(
-                  "The uploaded file does not appear to be a valid SVG file"
+                this.showToast(
+                  "The uploaded file does not appear to be a valid SVG file",
+                  "error"
                 );
                 return;
               }
@@ -496,11 +604,12 @@
               this.$nextTick(() => {
                 this.parseSvgElements();
                 this.setupElementClickHandlers();
+                this.showToast("SVG loaded. Pick an element to animate.");
               });
             };
 
             reader.onerror = () => {
-              alert("Error reading file. Please try again.");
+              this.showToast("Error reading file. Please try again.", "error");
             };
 
             reader.readAsText(file);
@@ -542,6 +651,10 @@
 
               return el;
             });
+
+            if (!this.svgElements.length) {
+              this.showToast("No animatable SVG elements found.", "error");
+            }
           },
 
           setupElementClickHandlers() {
@@ -564,6 +677,12 @@
             element.classList.add("selected-element");
           },
 
+          clearSelection() {
+            if (!this.selectedElement) return;
+            this.selectedElement.classList.remove("selected-element");
+            this.selectedElement = null;
+          },
+
           updateAnimationControls() {
             // Reset to default values when animation type changes
             switch (this.animationType) {
@@ -584,10 +703,13 @@
           },
 
           applyAnimation() {
-            if (!this.selectedElement) return;
+            if (!this.selectedElement) {
+              this.showToast("Select an element first.", "error");
+              return;
+            }
 
             // Remove existing animation
-            this.removeAnimation();
+            this.removeAnimation(true);
 
             const element = this.selectedElement;
             const animationName = `animation-${element.id}`;
@@ -689,10 +811,16 @@
 
             // Restart all running animations so preview stays in sync
             this.restartAllAnimations();
+            this.showToast("Animation applied.");
           },
 
-          removeAnimation() {
-            if (!this.selectedElement) return;
+          removeAnimation(silent = false) {
+            if (!this.selectedElement) {
+              if (!silent) {
+                this.showToast("Select an element to remove animation.", "error");
+              }
+              return;
+            }
 
             const element = this.selectedElement;
 
@@ -703,6 +831,10 @@
             const style = document.getElementById(`style-${element.id}`);
             if (style) {
               style.remove();
+            }
+
+            if (!silent) {
+              this.showToast("Animation removed.");
             }
           },
 
@@ -743,6 +875,20 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            this.showToast("Animated SVG downloaded.");
+          },
+
+          showToast(message, type = "success") {
+            this.toastMessage = message;
+            this.toastType = type;
+
+            if (this.toastTimer) {
+              clearTimeout(this.toastTimer);
+            }
+
+            this.toastTimer = setTimeout(() => {
+              this.toastMessage = "";
+            }, 2400);
           },
 
           restartAllAnimations() {
