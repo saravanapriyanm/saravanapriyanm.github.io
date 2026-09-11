@@ -536,7 +536,23 @@ function carousel() {
     },
 
     init() {
-      this.addSlide();
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem('lingen-carousel')); } catch (e) {}
+      if (saved && Array.isArray(saved.slides) && saved.slides.length) {
+        this.slides = saved.slides;
+        this.currentIdx = Math.min(saved.currentIdx || 0, saved.slides.length - 1);
+      } else {
+        this.addSlide();
+      }
+      this.$watch('slides', () => this.persist());
+      this.$watch('currentIdx', () => this.persist());
+    },
+
+    persist() {
+      clearTimeout(this._persistTimer);
+      this._persistTimer = setTimeout(() => {
+        localStorage.setItem('lingen-carousel', JSON.stringify({ slides: this.slides, currentIdx: this.currentIdx }));
+      }, 300);
     },
 
     // ─── Slide helpers ───
@@ -759,51 +775,77 @@ function carousel() {
       const prevIdx = this.currentIdx;
       this.currentIdx = idx;
       this.selectedEl = null;
-      await this.$nextTick();
-      await new Promise(r => setTimeout(r, 100));
+      try {
+        await this.$nextTick();
+        await new Promise(r => setTimeout(r, 100));
 
-      const canvasEl = document.getElementById('slide-' + this.slides[idx].id);
-      const canvas = await html2canvas(canvasEl, {
-        width: 1080,
-        height: 1080,
-        scale: 1,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null
-      });
-      this.currentIdx = prevIdx;
-      await this.$nextTick();
-      return canvas;
+        const canvasEl = document.getElementById('slide-' + idx);
+        const wrapperEl = document.getElementById('slide-wrapper');
+        const prevTransform = canvasEl.style.transform;
+        const prevOverflow = wrapperEl.style.overflow;
+        canvasEl.style.transform = 'none';
+        wrapperEl.style.overflow = 'visible';
+        try {
+          return await html2canvas(canvasEl, {
+            width: 1080,
+            height: 1080,
+            scale: 1,
+            useCORS: true,
+            backgroundColor: null
+          });
+        } finally {
+          canvasEl.style.transform = prevTransform;
+          wrapperEl.style.overflow = prevOverflow;
+        }
+      } finally {
+        this.currentIdx = prevIdx;
+        await this.$nextTick();
+      }
     },
 
     async exportImages() {
       this.showToast('Exporting images...');
-      for (let i = 0; i < this.slides.length; i++) {
-        const canvas = await this.getSlideCanvas(i);
-        const link = document.createElement('a');
-        link.download = `carousel-slide-${i+1}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        await new Promise(r => setTimeout(r, 300));
+      try {
+        for (let i = 0; i < this.slides.length; i++) {
+          const canvas = await this.getSlideCanvas(i);
+          const link = document.createElement('a');
+          link.download = `carousel-slide-${i+1}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          await new Promise(r => setTimeout(r, 300));
+        }
+        this.showToast('Images exported!');
+      } catch (err) {
+        console.error('Image export failed:', err);
+        this.showToast(err.name === 'SecurityError'
+          ? 'Export blocked: an image URL doesn\'t allow cross-origin use. Upload the image instead.'
+          : 'Image export failed: ' + err.message);
       }
-      this.showToast('Images exported!');
     },
 
     async exportPDF() {
       this.showToast('Generating PDF...');
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [1080, 1080] });
+      try {
+        const { jsPDF } = window.jspdf;
+        const PT = 1080 * 72 / 96; // px -> pt at 96dpi, jsPDF's native unit is pt
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: [PT, PT] });
 
-      for (let i = 0; i < this.slides.length; i++) {
-        if (i > 0) pdf.addPage([1080, 1080], 'portrait');
-        const canvas = await this.getSlideCanvas(i);
-        const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, 1080, 1080);
-        await new Promise(r => setTimeout(r, 200));
+        for (let i = 0; i < this.slides.length; i++) {
+          if (i > 0) pdf.addPage([PT, PT], 'portrait');
+          const canvas = await this.getSlideCanvas(i);
+          const imgData = canvas.toDataURL('image/png');
+          pdf.addImage(imgData, 'PNG', 0, 0, PT, PT);
+          await new Promise(r => setTimeout(r, 200));
+        }
+
+        pdf.save('linkedin-carousel.pdf');
+        this.showToast('PDF exported!');
+      } catch (err) {
+        console.error('PDF export failed:', err);
+        this.showToast(err.name === 'SecurityError'
+          ? 'Export blocked: an image URL doesn\'t allow cross-origin use. Upload the image instead.'
+          : 'PDF export failed: ' + err.message);
       }
-
-      pdf.save('linkedin-carousel.pdf');
-      this.showToast('PDF exported!');
     },
 
     showToast(msg) {
